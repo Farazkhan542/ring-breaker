@@ -115,6 +115,31 @@ def transxion_section() -> dict:
             "rows": d["rows"]}
 
 
+def ibm_section() -> dict | None:
+    path = config.ROOT / "results" / "ibm_hi_small.json"
+    if not path.exists():
+        return None
+    d = json.loads(path.read_text())
+    num = lambda k, label, help="": {"key": k, "label": label, "num": True, "help": help}
+    return {"title": f"IBM AMLworld HI-Small (5 million transactions, 30,470 banks, {d['clusters_ge3']} labelled "
+                     "laundering rings)",
+            "note": "Public benchmark from IBM Research (NeurIPS 2023). Ground truth is IBM's list of laundering "
+                    "attempts (cycle, scatter-gather, stack, fan-in/out, bipartite, random); 366 of 370 span two or more "
+                    "banks. Strict rule. Every bank applies the same risk-model threshold, trained on the other half of "
+                    "the banks (no leakage). Agent cases follow money from each flagged account, at most 3 hops and 20 "
+                    "questions. Reproduce with experiments/ibm_eval.py.",
+            "columns": [{"key": "flags", "label": "Local flags"},
+                        num("flag_precision", "Flag precision", "Share of flagged accounts involved in laundering"),
+                        num("alone", "Alone", "Rings recovered by banks linking only their own customers"),
+                        num("plain_strict", "Together", "Rings recovered by linking shared masked IDs"),
+                        num("agents_strict", "Agent cases", "Rings recovered by case-by-case investigations"),
+                        num("agent_case_precision", "Case precision", "Share of agent cases that are mostly laundering"),
+                        num("alone_pair_recall", "Pair recall alone"), num("plain_pair_recall", "Pair recall together"),
+                        num("agents_pair_recall", "Pair recall agents"),
+                        num("agents_pair_precision", "Pair precision agents")],
+            "rows": d["rows"]}
+
+
 def planner_section() -> dict | None:
     path = config.ROOT / "results" / "planner.json"
     if not path.exists():
@@ -155,6 +180,7 @@ def main():
                          num("avg_questions_per_case", "Questions per case")],
              "rows": rows},
             *([planner_section()] if planner_section() else []),
+            *([ibm_section()] if ibm_section() else []),
             transxion_section(),
         ],
     }
