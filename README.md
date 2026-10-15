@@ -51,11 +51,34 @@ Browser ──► Cloud Run service (FastAPI)
 ```
 
 The lead bank's agent reaches the other banks' agents through real A2A HTTP calls, even though all three are hosted
-in one container for the prototype. Each could run as its own Cloud Run service in its own bank's Google Cloud
-project without code changes (set `RB_A2A_BASE_URL`).
+in one container for the prototype. In production each bank would run its agent as its own Cloud Run service in its
+own Google Cloud project; the client currently reaches peers at `RB_A2A_BASE_URL/a2a/<bank>`, so separate services
+need either one gateway with path-based routing or a small change to give each bank its own URL.
 
 Design rules: **Gemini writes and argues; code computes every number.** Red flags, graph linking, confidence scores
 and metrics are deterministic Python. Account IDs that cross banks are `HMAC-SHA256(consortium_key, id)` pseudonyms.
+
+## Integration, scalability and performance
+
+**Fitting into a bank's existing systems** (design; the adapters are not built in this prototype):
+- *Input:* the bank agent would read alerts and transactions from the bank's existing transaction-monitoring system
+  through an adapter to the IBM AMLworld column layout the agents already use. Ring Breaker adds to the bank's alerts
+  rather than replacing them.
+- *Output:* the joint case file is structured data (facts, confidence and reasons, case text, skeptic's view) whose
+  fields map to a suspicious-transaction report, so it can feed the bank's case-management and filing process. A
+  goAML-style export is planned. The officer still files.
+- *Between banks:* A2A is an open protocol, so any bank's agent that speaks it can join. A consortium operator, such
+  as a COSMIC-style platform, would hold the masking key and the shared `policy.yaml`.
+
+**Scalability:** bank agents are stateless Cloud Run services that scale out; adding a bank means adding one agent.
+Cross-bank traffic grows with the number of *flagged* customers, not total volume: under 2% of transactions were
+shared in our synthetic tests. Red flags and graph work are plain Python and can run in batch, while models are
+called per case, not per transaction. The IBM benchmark run (4.5 million transactions, 23,000+ banks) completes
+offline in about 5 minutes on a laptop.
+
+**Performance (measured on a laptop):** one case built in-process takes about 40-50 ms with 6-15 cross-bank
+questions; the full demo, with live Gemini calls over A2A, finishes in about 36 seconds; officer decisions are
+stored in Firestore.
 
 ## Run locally
 
