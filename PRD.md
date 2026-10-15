@@ -100,11 +100,22 @@ Each bank runs its **own investigator agent on its own data only**. When a custo
 ### 3.1 What exists vs. what we add (deck slide)
 | Already exists | Ring Breaker adds |
 |---|---|
-| Cross-bank AML using privacy tech and federated learning (Swift experiments, BIS Aurora, Rhino, Partisia, Duality); hashing-based collaborative mining (paper "Towards Collaborative AML Among Financial Institutions", 2025) | **LLM investigator agents** that talk to each other and **explain their reasoning** |
-| Human-driven sharing platforms (MAS COSMIC) | **Sharing rules as readable policy** enforced automatically by a policy agent |
-| Agentic AML investigation tools inside a single bank (Hummingbird, Unit21, Hawk AI, Lucinity, NICE Actimize) | Agents at **different banks working one case together over A2A**, with human sign-off per bank |
+| **Bank-to-bank intelligence sharing, run by people:** Salv Bridge (Europe, 100+ institutions, 75,000+ joint investigations since 2021; analysts message each other, median reply 17 minutes); Nasdaq Verafin consortium and FRAMLxchange (US, ~2,500 institutions); MAS COSMIC (Singapore, 6 banks) | Each bank's **AI agent does the first round of cross-bank questions itself, in seconds**, and escalates only real cases to people |
+| **Shared risk signals and pooled scoring:** BioCatch Trust (Australia: ANZ, CBA, NAB, Westpac, Suncorp share pseudonymised receiving-account risk); Verafin consortium analytics | A full **joint investigation**: agents follow the money hop by hop and rebuild the whole ring, not just score one account |
+| **Privacy tech and federated learning across banks:** Swift experiments (13 banks), BIS Project Aurora, Consilient, Rhino, Partisia, Duality; hashing-based collaborative mining (paper "Towards Collaborative AML Among Financial Institutions", 2025) | **LLM investigator agents** that reason, explain themselves, and decide which leads to follow (Gemini planner: 58% fewer cross-bank questions) |
+| **AI agents for AML inside one bank:** FIS with Anthropic Financial Crimes Agent (with BMO and Amalgamated Bank; GA planned 2H 2026); Hummingbird, Unit21, Hawk AI, Lucinity, NICE Actimize | Agents at **different banks working one case together over the open A2A protocol**, with human sign-off per bank |
+| Sharing rules written in legal agreements and enforced by people | **Sharing rules as readable, machine-checked policy**: a policy agent blocks and logs every non-compliant message; a **skeptic agent** argues the innocent side of every case |
 
-Claim wording: "To our knowledge (searches on 14–15 October 2026), no one has built an LLM-agent version of cross-bank investigation."
+**Positioning (use this wording):** "Banks already share intelligence across institutions (Salv Bridge, Verafin, BioCatch Trust, COSMIC), and AI agents are arriving inside individual banks (FIS with Anthropic). But the cross-bank part is still people messaging people. Ring Breaker is the missing layer: each bank's AI agent does the first round of cross-bank questions itself, in seconds, under machine-checked sharing rules, and hands a joint case to humans."
+
+**Claim wording:** "To our knowledge (searches on 14–16 October 2026), no product has AI agents at different banks investigating one case together under automatically enforced sharing rules." Do **not** claim that cross-bank AML sharing or AML agents are new; both exist.
+
+**Market signals for the deck:**
+- Demand: in a BioCatch survey of 1,440 banking leaders in 25 countries (June 2026), 85% said interbank intelligence-sharing would help stop fraud and financial crime.
+- Why now: the EU AML Regulation (AMLR Article 75) makes AML information-sharing between institutions mandatory from July 2027 (as reported by Salv); the EU Payment Services Regulation is expected to follow for fraud.
+- Bottleneck we remove: human-to-human request and reply (Salv Bridge median 17 minutes per reply), which does not scale to mandatory sharing.
+
+Sources (checked 16 Oct 2026): salv.com/blog/five-years-banks-sharing-fraud-aml-data · fintech.global/2026/07/20/salv-bridge-hits-five-years-as-eu-sharing-rules-loom · verafin.com/resource/money-mule-detection-and-notification · eastandpartners.com/news/australian-banks-launch-fraud-intelligence-network-biocatch-trust · biocatch.com/press-release/world-banking-leaders-see-ai-agents-as-industrys-greatest-vulnerability-in-next-year · fisglobal.com (press release 2026: "FIS Brings Agentic AI to Banking with Anthropic") · fintech.global/2025/01/21/how-consilients-federated-aml-cft-model-is-transforming-bank-compliance. Vendor figures are company-reported.
 
 ---
 

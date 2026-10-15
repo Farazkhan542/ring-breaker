@@ -22,6 +22,19 @@ explanation, and each bank's officer approves or rejects their part.
 Every call has a fallback chain (other Gemini models, then a cached answer, then template text), so the demo always
 completes. The page shows which model produced each piece of text.
 
+## What exists, and what Ring Breaker adds
+
+Banks already share intelligence across institutions, through people: Salv Bridge (Europe), Nasdaq Verafin's
+consortium (US), BioCatch Trust (Australia) and MAS COSMIC (Singapore). AI agents for AML are arriving inside
+individual banks (for example FIS with Anthropic, Hummingbird, Lucinity). The cross-bank step is still people
+messaging people. Ring Breaker is the missing layer: **each bank's AI agent does the first round of cross-bank
+questions itself, in seconds, under machine-checked sharing rules**, rebuilds the whole ring, and hands a joint
+case to each bank's officer. To our knowledge (searches 14-16 Oct 2026), no product has AI agents at different
+banks investigating one case together under automatically enforced sharing rules.
+
+Why now: the EU AML Regulation makes AML information-sharing between institutions mandatory from July 2027, and
+85% of 1,440 banking leaders surveyed by BioCatch (June 2026) say interbank sharing would help stop financial crime.
+
 ## Architecture
 
 ```
