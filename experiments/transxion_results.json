@@ -1,0 +1,39 @@
+{
+  "clusters_ge3": 369,
+  "A_perfect_flags": {
+    "siloed_clusters_recovered": 22,
+    "collab_clusters_recovered": 369
+  },
+  "B_unsupervised": {
+    "0.03": {
+      "flagged": 1411,
+      "flag_precision": 0.622,
+      "laundering_accounts_flagged": 0.15,
+      "siloed_recovered": 0,
+      "collab_recovered": 1,
+      "siloed_groups": 33,
+      "collab_groups": 65,
+      "collab_group_precision": 0.815
+    },
+    "0.05": {
+      "flagged": 2363,
+      "flag_precision": 0.545,
+      "laundering_accounts_flagged": 0.22,
+      "siloed_recovered": 0,
+      "collab_recovered": 6,
+      "siloed_groups": 102,
+      "collab_groups": 15,
+      "collab_group_precision": 0.8
+    },
+    "0.1": {
+      "flagged": 4740,
+      "flag_precision": 0.32,
+      "laundering_accounts_flagged": 0.259,
+      "siloed_recovered": 2,
+      "collab_recovered": 31,
+      "siloed_groups": 412,
+      "collab_groups": 1,
+      "collab_group_precision": 0.0
+    }
+  }
+}

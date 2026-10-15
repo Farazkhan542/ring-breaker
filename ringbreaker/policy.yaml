@@ -1,0 +1,24 @@
+# Ring Breaker consortium sharing policy.
+# Modelled on MAS COSMIC's principle of sharing only when "objectively defined indicators of suspicion" are present.
+# Not legal advice and not legally certified.
+version: 1
+rules:
+  - id: R1-case-trigger
+    text: A bank may open a cross-bank case only about its own customer who shows at least 2 objective red-flag indicators.
+    min_indicators_to_open_case: 2
+  - id: R2-share-only-if-flagged
+    text: A bank answers questions about its own customer only if its own rules flag that customer with at least 2 indicators. Otherwise nothing is shared.
+    min_indicators_to_share: 2
+  - id: R3-allowed-questions
+    text: Only narrow questions are allowed - "is this masked account flagged, and why?" and "which masked accounts did it send large transfers to or receive them from?"
+    allowed_query_types: [flag_status, linked_counterparties]
+  - id: R4-allowed-fields
+    text: Answers may contain only masked IDs, bank codes, amount bands, 6-hour time windows, transfer direction and red-flag indicator names.
+    allowed_fields: [masked_id, bank_code, flagged, indicators, direction, amount_band, time_window, counterparties, status, reason]
+  - id: R5-forbidden-fields
+    text: Names, raw account numbers, addresses, balances, device or IP data, exact amounts and full transaction histories never leave a bank.
+    forbidden_fields: [name, account_number, raw_account_id, address, balance, device_id, ip_address, exact_amount, transaction_history, date_of_birth]
+  - id: R6-limits
+    text: A case may follow money at most 3 hops from the starting customer and ask at most 20 questions in total.
+    max_hops_per_case: 3
+    max_queries_per_case: 20

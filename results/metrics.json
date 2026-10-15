@@ -1,0 +1,220 @@
+{
+  "generated": "2026-10-15 10:26 UTC",
+  "caveat": "Synthetic worlds are easier than real data, and the red-flag rules were tuned once on seed 42.",
+  "sections": [
+    {
+      "title": "Synthetic three-bank worlds (14 planted rings each)",
+      "note": "Rings found under the strict rule. 'Alone' is the best any single bank can do by linking its own flagged customers. 'Plain linking' joins all shared masked IDs into groups. 'Agents' opens one case per flagged customer and follows the money with policy-checked questions.",
+      "columns": [
+        {
+          "key": "seed",
+          "label": "Seed",
+          "num": true,
+          "help": ""
+        },
+        {
+          "key": "alone",
+          "label": "Alone",
+          "num": true,
+          "help": "Rings any single bank finds by itself"
+        },
+        {
+          "key": "baseline_strict",
+          "label": "Plain linking",
+          "num": true,
+          "help": "Rings found by linking all shared masked IDs"
+        },
+        {
+          "key": "agents_strict",
+          "label": "Agents",
+          "num": true,
+          "help": "Rings found by the agents' case-by-case investigations"
+        },
+        {
+          "key": "agents_false_alarms",
+          "label": "Agent false alarms",
+          "num": true,
+          "help": "Case groups that are mostly innocent accounts"
+        },
+        {
+          "key": "flag_precision",
+          "label": "Flag precision",
+          "num": true,
+          "help": "Share of flagged customers that are ring members"
+        },
+        {
+          "key": "records_shared_pct",
+          "label": "% transactions shared",
+          "num": true,
+          "help": "Transfer records shared as masked IDs, bands and windows"
+        },
+        {
+          "key": "avg_questions_per_case",
+          "label": "Questions per case",
+          "num": true,
+          "help": ""
+        }
+      ],
+      "rows": [
+        {
+          "seed": 42,
+          "rings": 14,
+          "transactions": 52306,
+          "accounts": 6000,
+          "flagged": 82,
+          "flag_precision": 0.78,
+          "flag_recall": 0.8,
+          "alone": 3,
+          "baseline_strict": 10,
+          "baseline_strict_false_alarms": 1,
+          "baseline_loose": 14,
+          "baseline_groups": 11,
+          "agents_strict": 14,
+          "agents_false_alarms": 0,
+          "agent_case_groups": 33,
+          "masked_accounts_shared_pct": 1.37,
+          "records_shared_pct": 1.73,
+          "avg_questions_per_case": 15.4,
+          "avg_case_ms": 46.0
+        },
+        {
+          "seed": 7,
+          "rings": 14,
+          "transactions": 52276,
+          "accounts": 6000,
+          "flagged": 67,
+          "flag_precision": 0.866,
+          "flag_recall": 0.806,
+          "alone": 1,
+          "baseline_strict": 10,
+          "baseline_strict_false_alarms": 1,
+          "baseline_loose": 12,
+          "baseline_groups": 11,
+          "agents_strict": 12,
+          "agents_false_alarms": 1,
+          "agent_case_groups": 25,
+          "masked_accounts_shared_pct": 1.12,
+          "records_shared_pct": 1.01,
+          "avg_questions_per_case": 10.8,
+          "avg_case_ms": 42.5
+        },
+        {
+          "seed": 123,
+          "rings": 14,
+          "transactions": 52304,
+          "accounts": 6000,
+          "flagged": 70,
+          "flag_precision": 0.843,
+          "flag_recall": 0.766,
+          "alone": 2,
+          "baseline_strict": 12,
+          "baseline_strict_false_alarms": 0,
+          "baseline_loose": 13,
+          "baseline_groups": 12,
+          "agents_strict": 13,
+          "agents_false_alarms": 0,
+          "agent_case_groups": 25,
+          "masked_accounts_shared_pct": 1.17,
+          "records_shared_pct": 1.24,
+          "avg_questions_per_case": 11.2,
+          "avg_case_ms": 41.2
+        },
+        {
+          "seed": 2026,
+          "rings": 14,
+          "transactions": 52313,
+          "accounts": 6000,
+          "flagged": 84,
+          "flag_precision": 0.798,
+          "flag_recall": 0.838,
+          "alone": 4,
+          "baseline_strict": 9,
+          "baseline_strict_false_alarms": 0,
+          "baseline_loose": 12,
+          "baseline_groups": 9,
+          "agents_strict": 12,
+          "agents_false_alarms": 1,
+          "agent_case_groups": 33,
+          "masked_accounts_shared_pct": 1.4,
+          "records_shared_pct": 1.75,
+          "avg_questions_per_case": 14.6,
+          "avg_case_ms": 48.5
+        }
+      ]
+    },
+    {
+      "title": "TransXion benchmark (30 banks, 3 million transactions): earlier experiment",
+      "note": "From our go/no-go experiment, scored with the earlier, looser rule. These numbers are being re-scored with the strict rule; the 5% row is one giant group and should not be quoted.",
+      "columns": [
+        {
+          "key": "flags",
+          "label": "Local flags"
+        },
+        {
+          "key": "precision",
+          "label": "Flag precision",
+          "num": true,
+          "help": ""
+        },
+        {
+          "key": "alone",
+          "label": "Alone",
+          "num": true,
+          "help": "Clusters any single bank connects"
+        },
+        {
+          "key": "together",
+          "label": "Together",
+          "num": true,
+          "help": "Clusters connected with shared masked IDs"
+        },
+        {
+          "key": "groups",
+          "label": "Groups",
+          "num": true,
+          "help": ""
+        },
+        {
+          "key": "group_precision",
+          "label": "Group precision",
+          "num": true,
+          "help": ""
+        }
+      ],
+      "rows": [
+        {
+          "flags": "Perfect local flags (ceiling)",
+          "precision": "1.00",
+          "alone": 22,
+          "together": 369,
+          "groups": "-",
+          "group_precision": "-"
+        },
+        {
+          "flags": "Supervised, top 5% per bank",
+          "precision": "0.90",
+          "alone": 2,
+          "together": 32,
+          "groups": 1,
+          "group_precision": "1.00"
+        },
+        {
+          "flags": "Supervised, top 10% per bank",
+          "precision": "0.65",
+          "alone": 5,
+          "together": 17,
+          "groups": 56,
+          "group_precision": "0.75"
+        },
+        {
+          "flags": "Supervised, top 15% per bank",
+          "precision": "0.49",
+          "alone": 8,
+          "together": 16,
+          "groups": 105,
+          "group_precision": "0.50"
+        }
+      ]
+    }
+  ]
+}

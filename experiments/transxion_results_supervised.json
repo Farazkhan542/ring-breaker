@@ -1,0 +1,26 @@
+{
+  "0.05": {
+    "flag_precision": 0.902,
+    "laundering_accounts_flagged": 0.364,
+    "siloed_recovered": 2,
+    "collab_recovered": 32,
+    "collab_groups": 1,
+    "collab_group_precision": 1.0
+  },
+  "0.1": {
+    "flag_precision": 0.654,
+    "laundering_accounts_flagged": 0.529,
+    "siloed_recovered": 5,
+    "collab_recovered": 17,
+    "collab_groups": 56,
+    "collab_group_precision": 0.75
+  },
+  "0.15": {
+    "flag_precision": 0.492,
+    "laundering_accounts_flagged": 0.597,
+    "siloed_recovered": 8,
+    "collab_recovered": 16,
+    "collab_groups": 105,
+    "collab_group_precision": 0.495
+  }
+}

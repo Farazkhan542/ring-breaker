@@ -1,0 +1,235 @@
+[
+  {
+    "ring_id": "R01",
+    "pattern": "cycle",
+    "accounts": [
+      "B-01111",
+      "A-01175",
+      "C-01930",
+      "A-01529"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R02",
+    "pattern": "cycle",
+    "accounts": [
+      "B-01724",
+      "C-01042",
+      "A-01895",
+      "B-01632",
+      "A-00767"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R03",
+    "pattern": "cycle",
+    "accounts": [
+      "A-00434",
+      "B-01792",
+      "C-01353",
+      "B-01387",
+      "A-01043"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R04",
+    "pattern": "layering",
+    "accounts": [
+      "A-01470",
+      "C-01859",
+      "A-01432",
+      "C-01634"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R05",
+    "pattern": "scatter_gather",
+    "accounts": [
+      "B-00404",
+      "A-00573",
+      "B-01394",
+      "C-01877",
+      "A-00297",
+      "B-00719",
+      "B-00223"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R06",
+    "pattern": "layering",
+    "accounts": [
+      "B-01032",
+      "C-00378",
+      "A-00357",
+      "B-01027",
+      "C-01519",
+      "A-00716"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R07",
+    "pattern": "scatter_gather",
+    "accounts": [
+      "C-01186",
+      "A-00110",
+      "B-00965",
+      "C-01719",
+      "A-00059",
+      "B-00932",
+      "A-01605"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R08",
+    "pattern": "scatter_gather",
+    "accounts": [
+      "C-00618",
+      "A-01813",
+      "B-01470",
+      "C-00852",
+      "A-00035",
+      "B-01159",
+      "C-01686",
+      "C-01784"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R09",
+    "pattern": "scatter_gather",
+    "accounts": [
+      "B-01193",
+      "A-00127",
+      "B-00790",
+      "C-01127",
+      "A-01517",
+      "B-00751",
+      "C-00938",
+      "A-01983"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R10",
+    "pattern": "scatter_gather",
+    "accounts": [
+      "B-00583",
+      "A-01882",
+      "B-01443",
+      "C-01974",
+      "A-00423",
+      "B-01429"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R11",
+    "pattern": "cycle",
+    "accounts": [
+      "A-01464",
+      "C-00923",
+      "A-00088",
+      "B-00067",
+      "C-00717",
+      "B-01978"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R12",
+    "pattern": "layering",
+    "accounts": [
+      "C-00004",
+      "A-00052",
+      "B-01166",
+      "A-01841",
+      "B-00902"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R13",
+    "pattern": "layering",
+    "accounts": [
+      "C-00324",
+      "A-00690",
+      "B-01954",
+      "C-00650"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  },
+  {
+    "ring_id": "R14",
+    "pattern": "cycle",
+    "accounts": [
+      "A-00465",
+      "B-00308",
+      "A-01569",
+      "C-01230",
+      "B-00239"
+    ],
+    "banks": [
+      "BANK_A",
+      "BANK_B",
+      "BANK_C"
+    ]
+  }
+]

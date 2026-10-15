@@ -1,0 +1,56 @@
+{
+  "dataset": {
+    "transactions": 52306,
+    "accounts": 6000,
+    "rings": 14,
+    "ring_accounts": 80
+  },
+  "siloed": {
+    "BANK_A": {
+      "flagged_own_accounts": 28,
+      "flagged_that_are_ring_members": 21,
+      "rings_found": [],
+      "false_alarm_groups": 0
+    },
+    "BANK_B": {
+      "flagged_own_accounts": 30,
+      "flagged_that_are_ring_members": 24,
+      "rings_found": [],
+      "false_alarm_groups": 0
+    },
+    "BANK_C": {
+      "flagged_own_accounts": 24,
+      "flagged_that_are_ring_members": 19,
+      "rings_found": [],
+      "false_alarm_groups": 0
+    }
+  },
+  "siloed_rings_found_any_bank": [],
+  "collaborative": {
+    "rings_found": [
+      "R01",
+      "R02",
+      "R03",
+      "R04",
+      "R05",
+      "R06",
+      "R07",
+      "R08",
+      "R09",
+      "R10",
+      "R11",
+      "R12",
+      "R13",
+      "R14"
+    ],
+    "false_alarm_groups": 0,
+    "candidate_groups": 11
+  },
+  "data_shared": {
+    "masked_accounts_shared": 82,
+    "share_of_all_accounts": 0.0137,
+    "transfer_records_shared": 907,
+    "share_of_all_transactions": 0.0173,
+    "raw_customer_data_shared": "none (masked IDs, bank code, amount and time only)"
+  }
+}
