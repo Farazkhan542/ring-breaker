@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-1167e3b86fd1\",\n  \"M-df75ab4cdcb0\",\n  \"M-88b59c125dea\"\n],\n \"drop\": [],\n \"reason\": \"The central account shows a rapid cross-bank fan-out pattern. We are asking about the earliest outgoing transfers from BANK_A on July 2, 2026, to trace the initial movement of funds.\"\n}", "model": "gemini-3.5-flash-lite"}

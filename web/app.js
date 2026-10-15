@@ -94,7 +94,14 @@ function drawMap(final) {
 }
 
 /* ---------- conversation + sharing counters ---------- */
-let q = 0, shared;
+let q = 0, shared, seedId = null, explanations = {};
+function srcModel(x) { return x.source === "fallback" ? "rule-based text" : `${esc(x.model)}${x.source === "cache" ? " · cached" : ""}`; }
+function fillExplanations() {
+  document.querySelectorAll("[data-explain]").forEach((el) => {
+    const x = explanations[el.dataset.explain];
+    if (x) el.innerHTML = `${esc(x.text)} <span class="src">${srcModel(x)}</span>`;
+  });
+}
 function resetShared() { shared = Object.fromEntries(BANKS.map((b) => [b, { answers: 0, withheld: 0, ids: new Set(), records: 0 }])); }
 function renderShared() {
   let records = 0;
@@ -117,6 +124,7 @@ function onEvent(ev) {
   switch (ev.type) {
     case "phase": case "note": addConvo(esc(ev.text), ev.type); break;
     case "case_open":
+      seedId = ev.subject;
       addConvo(`<span class="who">${NICE[ev.bank]}</span> opens a case on <span class="mono">${esc(ev.subject)}</span> (${esc(ev.indicators.join(", "))}).<span class="rule">${esc(ev.rule_id)}: ${esc(ev.rule_text)}</span>`, ev.allowed ? "ok" : "blocked"); break;
     case "local_check":
       if (ev.hop > 0) addConvo(`<span class="who">${NICE[ev.bank]}</span> checks its own customer <span class="mono">${esc(ev.masked_id)}</span> locally: ${ev.flagged ? "flagged" : "not flagged"}. Nothing leaves the bank.`, "note"); break;
@@ -138,6 +146,17 @@ function onEvent(ev) {
       } else { s.withheld++; body = `Withheld: ${esc(p.reason)}`; }
       addConvo(`<span class="who">${NICE[ev.from]} → ${NICE[ev.to]}</span> · answer<br>${body}<span class="rule">${esc(ev.rule_id)}: ${esc(ev.detail)}</span>`, p.status === "ok" ? "ok" : "");
       renderShared(); break;
+    }
+    case "thinking": addConvo(esc(ev.text), "note"); break;
+    case "plan": {
+      const who = ev.source === "live" || ev.source === "cache" ? `Planner · ${esc(ev.model)} via ADK${ev.source === "cache" ? " · cached" : ""}` : "Planner · rule-based fallback";
+      addConvo(`<span class="who">${who}</span><br>${esc(ev.reason)}<span class="rule">Follows ${ev.ask.length} of ${ev.leads} lead(s)${ev.drop.length ? `, drops ${ev.drop.length}` : ""}. The policy agent still checks every question.</span>`, "plan");
+      break;
+    }
+    case "explain": {
+      explanations[ev.masked_id] = ev;
+      if (ev.masked_id === seedId) addConvo(`<span class="who">${NICE[ev.bank]}'s own assistant · ${srcModel(ev)}</span><br>${esc(ev.text)}<span class="rule">Runs inside ${NICE[ev.bank]} on its own data; nothing here is shared.</span>`, "explain");
+      fillExplanations(); break;
     }
     case "graph": graph = ev; drawMap(false); break;
     case "ring":
@@ -162,10 +181,11 @@ function showCase(ev) {
   const byBank = ev.facts.accounts_by_bank;
   $("#approvals").innerHTML = BANKS.filter((b) => byBank[b]).map((b) => `<div class="approval" style="--c:${COLOR[b]}" data-bank="${b}">
     <h4><span class="shape ${SHAPE[b]}" aria-hidden="true"></span>${NICE[b]} officer</h4>
-    <ul>${byBank[b].map((a) => `<li><span class="mono">${esc(a.masked_id)}</span></li>`).join("")}</ul>
+    <ul>${byBank[b].map((a) => `<li><span class="mono">${esc(a.masked_id)}</span><p class="why" data-explain="${esc(a.masked_id)}">Your assistant is explaining this flag…</p></li>`).join("")}</ul>
     <label for="r-${b}">Reason (stored with the decision)</label><input id="r-${b}" maxlength="500" placeholder="e.g. matches our own alert history">
     <div class="btns"><button data-d="approve">Approve filing</button><button data-d="reject">Reject</button><button data-d="more_evidence">Ask for more evidence</button></div>
     <p class="decided" aria-live="polite"></p></div>`).join("");
+  fillExplanations();
   $("#approvals").querySelectorAll("button").forEach((btn) => btn.addEventListener("click", async () => {
     const box = btn.closest(".approval"), bank = box.dataset.bank;
     const r = await fetch(`/api/cases/${ev.case_id}/decisions`, { method: "POST", headers: { "Content-Type": "application/json" },
@@ -179,7 +199,7 @@ function showCase(ev) {
 $("#run").addEventListener("click", () => {
   $("#run").disabled = true; $("#status").textContent = "Agents are talking…";
   $("#convo").innerHTML = ""; $("#case").hidden = true; q = 0; $("#qcount").textContent = "0 questions";
-  graph = { nodes: [], edges: [] }; order = []; resetShared(); renderShared();
+  graph = { nodes: [], edges: [] }; order = []; seedId = null; explanations = {}; resetShared(); renderShared();
   const es = new EventSource("/api/demo/run");
   es.onmessage = (m) => { const ev = JSON.parse(m.data); onEvent(ev); if (ev.type === "done" || ev.type === "error") es.close(); };
   es.onerror = () => { es.close(); if ($("#run").disabled) { $("#status").textContent = "Connection lost. Run it again."; $("#run").disabled = false; } };

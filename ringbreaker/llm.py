@@ -1,9 +1,11 @@
-"""Gemini through Google ADK, with a response cache and a deterministic fallback so the demo always completes."""
+"""Google models (Gemini, Gemma) through Google ADK, with a response cache and a deterministic fallback so the demo
+always completes. Order: live model chain -> cached response -> template text."""
 import asyncio
 import hashlib
 import json
 import logging
 import os
+import re
 
 from . import config
 
@@ -19,16 +21,17 @@ def llm_available() -> bool:
 
 
 def _cache_path(name: str, prompt: str):
-    key = hashlib.sha256(f"{config.MODEL_ID}|{name}|{prompt}".encode()).hexdigest()[:24]
+    key = hashlib.sha256(f"{name}|{prompt}".encode()).hexdigest()[:24]
     return config.CACHE_DIR / f"{name}-{key}.json"
 
 
-async def _run_adk_agent(name: str, instruction: str, prompt: str, model: str) -> str:
+async def _run_adk_agent(name: str, instruction: str, prompt: str, model: str, json_mode: bool) -> str:
     from google.adk.agents import LlmAgent
     from google.adk.runners import InMemoryRunner
     from google.genai import types
 
-    agent = LlmAgent(name=name, model=model, instruction=instruction)
+    gen_cfg = types.GenerateContentConfig(response_mime_type="application/json") if json_mode else None
+    agent = LlmAgent(name=name, model=model, instruction=instruction, generate_content_config=gen_cfg)
     runner = InMemoryRunner(agent=agent, app_name="ringbreaker")
     session = await runner.session_service.create_session(app_name="ringbreaker", user_id="officer")
     text = ""
@@ -39,33 +42,53 @@ async def _run_adk_agent(name: str, instruction: str, prompt: str, model: str) -
     return text.strip()
 
 
-async def generate(name: str, instruction: str, facts: dict, fallback: str) -> dict:
-    """Run an ADK agent on `facts`. Returns {"text", "source"} where source is gemini | cache | fallback."""
+def parse_json(text: str) -> dict | None:
+    m = re.search(r"\{.*\}", text or "", re.S)
+    try:
+        return json.loads(m.group(0)) if m else None
+    except json.JSONDecodeError:
+        return None
+
+
+async def generate(name: str, instruction: str, facts: dict, fallback, *, models: list[str] | None = None,
+                   json_mode: bool = False, timeout: float | None = None, budget: float | None = None,
+                   cache_first: bool | None = None) -> dict:
+    """Run an ADK agent on `facts`. Returns {"text" (or "data" in json_mode), "source", "model"}.
+    source is live | cache | fallback (live means a Google model answered now: Gemini or Gemma)."""
+    models = models or [config.MODEL_ID, *config.FALLBACK_MODELS]
+    timeout = timeout or config.LLM_TIMEOUT_S
+    budget = budget or config.LLM_BUDGET_S
     prompt = json.dumps(facts, indent=1, sort_keys=True, default=str)
     path = _cache_path(name, instruction + prompt)
     cached = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
-    if cached and config.CACHE_FIRST:
-        return {"text": cached["text"], "source": "cache", "model": cached.get("model")}
+
+    def out(text, source, model):
+        if json_mode:
+            return {"data": parse_json(text) if isinstance(text, str) else text, "source": source, "model": model}
+        return {"text": text, "source": source, "model": model}
+
+    if cached and (config.CACHE_FIRST if cache_first is None else cache_first):
+        return out(cached["text"], "cache", cached.get("model"))
     if llm_available():
         loop = asyncio.get_running_loop()
-        deadline = loop.time() + config.LLM_BUDGET_S
-        for model in [config.MODEL_ID, *config.FALLBACK_MODELS]:  # busy (503) or missing model: try the next one
+        deadline = loop.time() + budget
+        for model in models:  # busy (503), missing or slow model: try the next one
             left = deadline - loop.time()
-            if left < 3:
+            if left < 1.5:
                 break
             try:
-                text = await asyncio.wait_for(_run_adk_agent(name, instruction, prompt, model),
-                                              min(config.LLM_TIMEOUT_S, left))
-            except Exception as e:  # quota, overload, network, auth: try next model, then cache, then template
-                log.warning("Gemini call %s on %s failed: %s", name, model, str(e)[:200])
+                text = await asyncio.wait_for(_run_adk_agent(name, instruction, prompt, model, json_mode),
+                                              min(timeout, left))
+            except Exception as e:  # quota, overload, network, auth: next model, then cache, then template
+                log.warning("model call %s on %s failed: %s", name, model, (str(e) or type(e).__name__)[:200])
                 continue
-            if text:
+            if text and (not json_mode or parse_json(text) is not None):
                 try:
                     config.CACHE_DIR.mkdir(parents=True, exist_ok=True)
                     path.write_text(json.dumps({"text": text, "model": model}), encoding="utf-8")
                 except OSError:
                     pass
-                return {"text": text, "source": "gemini", "model": model}
+                return out(text, "live", model)
     if cached:
-        return {"text": cached["text"], "source": "cache", "model": cached.get("model")}
-    return {"text": fallback, "source": "fallback", "model": None}
+        return out(cached["text"], "cache", cached.get("model"))
+    return out(fallback, "fallback", None)

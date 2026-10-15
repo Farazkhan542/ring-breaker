@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-c826a61bc664\",\n  \"M-4e8082b8e04b\"\n ],\n \"drop\": [],\n \"reason\": \"Both candidate leads involve amounts just under the 10k threshold occurring immediately before and after the suspicious activity at hop 0, fitting a rapid pass-through pattern.\"\n}", "model": "gemini-3.5-flash-lite"}

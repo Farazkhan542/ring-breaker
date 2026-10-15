@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-4533a115d7fb\",\n  \"M-3cbad37dd283\"\n ],\n \"drop\": [\n  \"M-ffda365d826f\"\n ],\n \"reason\": \"Prioritised the 8k-10k transfers close to the suspicious timeframe matching the rapid pass-through pattern, while dropping the earlier smaller incoming transfer.\"\n}", "model": "gemini-3.5-flash-lite"}

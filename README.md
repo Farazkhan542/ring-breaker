@@ -10,6 +10,18 @@ enforces COSMIC-style sharing rules on every message (masked IDs, amount bands a
 **case-writer agent** (Gemini via ADK) drafts the joint case file, a **skeptic agent** argues the innocent
 explanation, and each bank's officer approves or rejects their part.
 
+### Where Google AI does the work
+
+| Agent | Model (via Google ADK) | What it decides or writes |
+|---|---|---|
+| Investigation planner | Gemini 3.5 Flash-Lite | Which cross-bank leads to follow next and which to drop, with a reason for the officer. Code checks it can only pick real leads; the policy agent checks every question it causes. |
+| Bank assistant | Gemma 4 (open model a bank could host in-house); Gemini Flash-Lite as backup | Explains to the bank's own investigator why its customer was flagged. Runs on that bank's data only. |
+| Case writer | Gemini 3.8 Flash | The joint case file in suspicious-transaction-report style, from masked facts only. |
+| Skeptic | Gemini 3.8 Flash | The strongest innocent explanation, the evidence that would settle it, and the case's weak points. |
+
+Every call has a fallback chain (other Gemini models, then a cached answer, then template text), so the demo always
+completes. The page shows which model produced each piece of text.
+
 ## Architecture
 
 ```
@@ -19,7 +31,10 @@ Browser ──► Cloud Run service (FastAPI)
              ├─ /a2a/bank_a|b|c/      three bank agents, each an A2A JSON-RPC endpoint + agent card,
              │                        each loaded with ONLY its own data partition
              ├─ policy agent          policy.yaml checks + audit log for every cross-bank message
-             └─ case writer, skeptic  Google ADK LlmAgents on Gemini (live → cache → template fallback)
+             ├─ planner               Gemini (ADK) chooses which leads to follow
+             ├─ bank assistants       Gemma (ADK) explains each bank's own flagged customers
+             ├─ case writer, skeptic  Gemini (ADK) (live → cache → template fallback)
+             └─ decisions             Firestore (SQLite locally)
 ```
 
 The lead bank's agent reaches the other banks' agents through real A2A HTTP calls, even though all three are hosted
@@ -64,8 +79,17 @@ half of the group. Reproduce with `python -m ringbreaker.eval`.
 | 123 | 2 / 14 | 12 / 14 | 13 / 14 | 0 | 1.24% |
 | 2026 | 4 / 14 | 9 / 14 | 12 / 14 | 1 | 1.75% |
 
+Gemini planner vs rule-based order (seed 42, same 20 starting customers, `python -m ringbreaker.eval_planner`):
+the planner asked **58% fewer cross-bank questions** (6.5 vs 15.3 per case) and added fewer wrong accounts
+(0.45 vs 0.75 per case), for slightly lower ring coverage (0.59 vs 0.64).
+
 Caveats: this is our own synthetic data, easier than real data, and the red-flag rules were tuned once on seed 42.
-TransXion (30-bank benchmark) results are being re-scored with the strict rule.
+
+**TransXion (30 banks, 3M transactions), honestly reported:** under the strict rule almost no laundering clusters
+are recovered by any method, even with perfect flags (2-7 of 369), because laundering accounts of different rings
+also trade with each other normally, so linking flagged accounts merges rings. Our earlier "369 of 369" and
+"32 vs 2" figures came from a loose rule that credited giant mixed groups. Next step: link through suspicious
+transfers, not just suspicious accounts. Reproduce with `experiments/transxion_rescore.py`.
 
 ## Data and credits
 

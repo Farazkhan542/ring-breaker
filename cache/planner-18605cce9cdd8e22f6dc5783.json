@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-26a1a02f9c11\",\n  \"M-3a6e03a85f88\"\n],\n \"drop\": [],\n \"reason\": \"Both candidate leads involve amounts just under the 10k threshold and connect directly to the suspicious fan-out account M-0c7d42f6ff12, matching the typology of the laundering ring.\"\n}", "model": "gemini-3.5-flash-lite"}

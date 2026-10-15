@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-e86140af6615\",\n  \"M-b30ee679b4c2\",\n  \"M-9461db7b8598\"\n],\n \"drop\": [],\n \"reason\": \"The flagged account M-8b959f3b0e0e shows a rapid fan-out pattern with multiple cross-bank outbound transfers. We are prioritizing the earliest outbound candidate leads to trace the immediate flow of funds.\"\n}", "model": "gemini-3.5-flash-lite"}

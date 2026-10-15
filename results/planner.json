@@ -1,0 +1,25 @@
+{
+  "generated": "2026-10-15 10:55 UTC",
+  "rows": [
+    {
+      "method": "Rule-based order",
+      "cases": 20,
+      "coverage": 0.64,
+      "wrong_members": 0.75,
+      "questions": 15.3
+    },
+    {
+      "method": "Gemini planner",
+      "cases": 20,
+      "coverage": 0.59,
+      "wrong_members": 0.45,
+      "questions": 6.5
+    }
+  ],
+  "planner_calls": 40,
+  "planner_calls_live": 39,
+  "models": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+  ]
+}

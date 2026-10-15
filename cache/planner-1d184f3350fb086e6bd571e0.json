@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-868f7c667aa4\",\n  \"M-f2e76452d2e9\"\n ],\n \"drop\": [],\n \"reason\": \"Both leads involve transfers in the 8k-10k amount band, which matches the suspicious indicators already flagged on the core account. We should query both to trace the fund flow.\"\n}", "model": "gemini-3.5-flash-lite"}

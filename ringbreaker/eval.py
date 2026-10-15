@@ -84,6 +84,55 @@ TRANSXION_PREVIOUS = [  # experiments/transxion_results*.json, loose rule (any g
 ]
 
 
+def transxion_section() -> dict:
+    num = lambda k, label, help="": {"key": k, "label": label, "num": True, "help": help}
+    path = config.ROOT / "results" / "transxion.json"
+    if not path.exists():
+        return {"title": "TransXion benchmark (30 banks, 3 million transactions): earlier experiment",
+                "note": "Scored with the earlier, looser rule; being re-scored. The 5% row is one giant group.",
+                "columns": [{"key": "flags", "label": "Local flags"}, num("precision", "Flag precision"),
+                            num("alone", "Alone"), num("together", "Together"), num("groups", "Groups"),
+                            num("group_precision", "Group precision")],
+                "rows": TRANSXION_PREVIOUS}
+    d = json.loads(path.read_text())
+    return {"title": f"TransXion benchmark (30 banks, 3 million transactions, {d['clusters_ge3']} laundering clusters)",
+            "note": "A hard result, reported as measured. Under the strict rule almost no clusters are recovered by any "
+                    "method, even with perfect flags: in TransXion, laundering accounts of different rings also trade "
+                    "with each other normally, so linking flagged accounts through all their transfers merges rings. "
+                    "Our earlier '369 of 369' and '32 vs 2' figures came from a loose rule that credited giant mixed "
+                    "groups (last column). Pair scores: recall = share of same-ring account pairs linked; precision = "
+                    "share of linked pairs truly in the same ring. Next step: link through suspicious transfers, not "
+                    "just suspicious accounts. Reproduce with experiments/transxion_rescore.py.",
+            "columns": [{"key": "flags", "label": "Local flags"},
+                        num("flag_precision", "Flag precision", "Share of flagged accounts involved in laundering"),
+                        num("alone", "Alone", "Clusters recovered (strict) by banks linking only their own customers"),
+                        num("plain_strict", "Together", "Clusters recovered (strict) by linking shared masked IDs"),
+                        num("agents_strict", "Agent cases", "Clusters recovered (strict) by case-by-case investigations"),
+                        num("alone_pair_recall", "Pair recall alone"),
+                        num("plain_pair_recall", "Pair recall together"),
+                        num("plain_pair_precision", "Pair precision together"),
+                        num("plain_loose", "Together, old loose rule", "Our earlier rule, for comparison only")],
+            "rows": d["rows"]}
+
+
+def planner_section() -> dict | None:
+    path = config.ROOT / "results" / "planner.json"
+    if not path.exists():
+        return None
+    d = json.loads(path.read_text())
+    num = lambda k, label, help="": {"key": k, "label": label, "num": True, "help": help}
+    return {"title": "Gemini planner vs rule-based order (synthetic, seed 42)",
+            "note": f"Same {d['rows'][0]['cases']} starting customers. The planner decides which cross-bank leads to "
+                    f"follow and which to drop ({d['planner_calls_live']} of {d['planner_calls']} planner calls "
+                    "answered live by Gemini). Fewer questions means less data leaves each bank. Reproduce with "
+                    "python -m ringbreaker.eval_planner (results vary slightly between runs).",
+            "columns": [{"key": "method", "label": "Method"},
+                        num("coverage", "Ring coverage", "Share of the main ring the case found"),
+                        num("wrong_members", "Wrong members per case", "Accounts in the case that are not in that ring"),
+                        num("questions", "Cross-bank questions per case")],
+            "rows": d["rows"]}
+
+
 def main():
     rows = [run_world(s) for s in SEEDS]
     for r in rows:
@@ -105,14 +154,8 @@ def main():
                          num("records_shared_pct", "% transactions shared", "Transfer records shared as masked IDs, bands and windows"),
                          num("avg_questions_per_case", "Questions per case")],
              "rows": rows},
-            {"title": "TransXion benchmark (30 banks, 3 million transactions): earlier experiment",
-             "note": "From our go/no-go experiment, scored with the earlier, looser rule. These numbers are being "
-                     "re-scored with the strict rule; the 5% row is one giant group and should not be quoted.",
-             "columns": [{"key": "flags", "label": "Local flags"},
-                         num("precision", "Flag precision"), num("alone", "Alone", "Clusters any single bank connects"),
-                         num("together", "Together", "Clusters connected with shared masked IDs"),
-                         num("groups", "Groups"), num("group_precision", "Group precision")],
-             "rows": TRANSXION_PREVIOUS},
+            *([planner_section()] if planner_section() else []),
+            transxion_section(),
         ],
     }
     out = config.ROOT / "results"

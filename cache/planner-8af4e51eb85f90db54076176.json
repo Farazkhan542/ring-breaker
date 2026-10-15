@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-e7a681f767e0\",\n  \"M-2956d5343fd9\",\n  \"M-3560d9e0bf3a\"\n ],\n \"drop\": [],\n \"reason\": \"We prioritize investigating the largest transfer band (5k-8k) and immediate outgoing flows from the flagged account showing rapid cross-bank fan-out.\"\n}", "model": "gemini-3.5-flash-lite"}

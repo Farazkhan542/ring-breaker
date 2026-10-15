@@ -11,10 +11,13 @@ POLICY_FILE = Path(os.environ.get("RB_POLICY_FILE", ROOT / "ringbreaker" / "poli
 # Gemini. Vertex AI is used when GOOGLE_GENAI_USE_VERTEXAI=true (plus GOOGLE_CLOUD_PROJECT/LOCATION);
 # otherwise GOOGLE_API_KEY. With neither, or RB_LLM=off, cached/template text is used so the demo always completes.
 MODEL_ID = os.environ.get("RB_MODEL_ID", "gemini-3.8-flash")
-FALLBACK_MODELS = [m for m in os.environ.get("RB_FALLBACK_MODELS", "gemini-3.7-flash,gemini-2.5-flash").split(",") if m]
+FALLBACK_MODELS = [m for m in os.environ.get("RB_FALLBACK_MODELS", "gemini-3.5-flash,gemini-3.5-flash-lite").split(",") if m]
+PLANNER_MODELS = [m for m in os.environ.get("RB_PLANNER_MODELS", "gemini-3.5-flash-lite,gemini-3.1-flash-lite").split(",") if m]
+# Bank-side explainer: an open Gemma model a bank could host inside its own walls; Flash-Lite as backup.
+BANK_MODELS = [m for m in os.environ.get("RB_BANK_MODELS", "gemma-4-26b-a4b-it,gemma-4-31b-it,gemini-3.5-flash-lite").split(",") if m]
 LLM_MODE = os.environ.get("RB_LLM", "auto")  # auto | off
-LLM_TIMEOUT_S = float(os.environ.get("RB_LLM_TIMEOUT_S", "20"))  # per model attempt
-LLM_BUDGET_S = float(os.environ.get("RB_LLM_BUDGET_S", "35"))  # all attempts; then cache, then template
+LLM_TIMEOUT_S = float(os.environ.get("RB_LLM_TIMEOUT_S", "12"))  # per model attempt
+LLM_BUDGET_S = float(os.environ.get("RB_LLM_BUDGET_S", "28"))  # all attempts; then cache, then template
 CACHE_FIRST = os.environ.get("RB_CACHE_FIRST", "false").lower() == "true"  # true: instant demo from cache
 
 # Consortium masking key: Secret Manager in production (mounted as env var on Cloud Run).

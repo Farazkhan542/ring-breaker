@@ -70,7 +70,7 @@ main { max-width: 1320px; margin: 0 auto; padding: 24px; }
 .card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .card-h h2 { font-size: 20px; }
 .pill { font: 500 12px var(--mono); background: var(--paper); border-radius: 999px; padding: 3px 10px; color: var(--ink); }
-.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .stage .card { margin-bottom: 20px; }
 
 .map { position: relative; min-height: 240px; }
@@ -94,6 +94,9 @@ main { max-width: 1320px; margin: 0 auto; padding: 24px; }
 .convo li.blocked { border-left-color: var(--block); background: var(--block-bg); }
 .convo li.phase, .convo li.note { background: none; border-left-color: transparent; color: var(--muted); font-style: italic; padding-left: 0; }
 .convo .who { font-weight: 600; }
+.convo li.plan { border-left-color: var(--focus); background: #eef3fc; }
+.convo li.explain { border-left-color: var(--bank-c); background: #f6f3fb; }
+.approval .why { margin: 2px 0 6px; color: var(--muted); font-size: 12px; }
 .convo .rule { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
 .convo .verdict { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .04em; }
 .convo .ok .verdict { color: var(--allow); }

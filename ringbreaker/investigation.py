@@ -4,26 +4,27 @@ questions over A2A. Every question and answer passes the policy agent and is wri
 The lead bank never sees other banks' raw data: it only holds its own partition plus the masked answers it receives.
 """
 import asyncio
-import itertools
-from collections import deque
+import secrets
+from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
 import networkx as nx
 
+from . import planner as planner_mod
 from .bank_agent import BankAgent
 from .masking import mask
 from .policy import Policy
 
 Emit = Callable[[dict], Awaitable[None]]
-BAND_PRIORITY = {"8k-10k": 0, "10k-20k": 1, "5k-8k": 2, "20k-50k": 3, "3k-5k": 4}
-_case_counter = itertools.count(1)
 
 
 class Investigation:
     def __init__(self, lead: BankAgent, seed_account: str, ask: Callable[[str, dict], Awaitable[dict]],
-                 policy: Policy, emit: Emit, case_id: str | None = None, overreach_demo: bool = True):
+                 policy: Policy, emit: Emit, case_id: str | None = None, overreach_demo: bool = True,
+                 planner: Callable | None = None):
         self.lead, self.seed, self.ask, self.policy, self.emit = lead, seed_account, ask, policy, emit
-        self.case_id = case_id or f"CASE-{next(_case_counter):04d}"
+        self.planner = planner  # None: rule-based order (evaluation harness); planner.plan_next: Gemini
+        self.case_id = case_id or f"CASE-{datetime.now(timezone.utc):%m%d}-{secrets.token_hex(3).upper()}"
         self.nodes: dict[str, dict] = {}   # masked_id -> {bank, flagged, indicators, hop}
         self.edges: dict[tuple, dict] = {}  # (src, dst, window, band) -> edge
         self.queries = 0
@@ -51,6 +52,42 @@ class Investigation:
         return resp if d2.allowed else None
 
     # ---------- main loop ----------
+    async def _expand(self, m: str, bank: str, hop: int) -> list[dict] | None:
+        """Learn about one account. Own customers are checked locally (nothing leaves the bank); other banks' are
+        asked over A2A. Returns its large-transfer counterparties if it is flagged and within the hop limit."""
+        if bank == self.lead.bank:
+            acct = self.lead.resolve_own(m)
+            flags = self.lead.flags.get(acct)
+            self.nodes[m] = {"bank": bank, "flagged": bool(flags), "indicators": flags or [], "hop": hop}
+            await self.emit({"type": "local_check", "bank": bank, "masked_id": m, "flagged": bool(flags),
+                             "indicators": flags or [], "hop": hop})
+            if not flags or hop >= self.max_hops:
+                return None
+            return [{"direction": e["direction"], "masked_id": e["counterparty"], "bank_code": e["bank_code"],
+                     "amount_band": e["amount_band"], "time_window": e["time_window"]}
+                    for e in self.lead.local_graph(acct)]
+        status = await self._ask(bank, {"type": "flag_status", "subject": m, "hop": hop,
+                                        "fields": ["flagged", "indicators"]})
+        if not status or status.get("status") != "ok":
+            self.nodes[m] = {"bank": bank, "flagged": False, "indicators": [], "hop": hop, "withheld": True}
+            return None
+        self.nodes[m] = {"bank": bank, "flagged": True, "indicators": status["indicators"], "hop": hop}
+        if self.overreach_demo:  # the one deliberately non-compliant request, to show the policy agent at work
+            self.overreach_demo = False
+            await self.emit({"type": "note", "text": "The report drafter asks for the customer's name and balance "
+                                                     "to fill in the case file."})
+            await self._ask(bank, {"type": "flag_status", "subject": m, "hop": hop, "fields": ["name", "balance"]})
+        if hop >= self.max_hops:
+            return None
+        linked = await self._ask(bank, {"type": "linked_counterparties", "subject": m, "hop": hop,
+                                        "fields": ["masked_id", "bank_code", "direction", "amount_band",
+                                                   "time_window"]})
+        return linked["counterparties"] if linked and linked.get("status") == "ok" else None
+
+    def _known(self) -> list[dict]:
+        return [{"masked_id": m, "bank": n["bank"], "flagged": n["flagged"], "indicators": n["indicators"],
+                 "hop": n["hop"]} for m, n in self.nodes.items()]
+
     async def run(self) -> dict:
         lead, seed = self.lead, self.seed
         ind = lead.flags.get(seed, [])
@@ -61,54 +98,47 @@ class Investigation:
         if not d.allowed:
             return self.result()
 
-        queue = deque([(mask(seed), lead.bank, 0)])
-        seen = set()
-        while queue:
-            m, bank, hop = queue.popleft()
-            if m in seen:
-                continue
-            seen.add(m)
-            if bank == lead.bank:  # own customer: checked locally, nothing leaves the bank
-                acct = lead.resolve_own(m)
-                flags = lead.flags.get(acct)
-                self.nodes[m] = {"bank": bank, "flagged": bool(flags), "indicators": flags or [], "hop": hop}
-                await self.emit({"type": "local_check", "bank": bank, "masked_id": m, "flagged": bool(flags),
-                                 "indicators": flags or [], "hop": hop})
-                if not flags or hop >= self.max_hops:
-                    continue
-                cps = [{"direction": e["direction"], "masked_id": e["counterparty"], "bank_code": e["bank_code"],
-                        "amount_band": e["amount_band"], "time_window": e["time_window"]}
-                       for e in lead.local_graph(acct)]
-                reporter = bank
-            else:
-                status = await self._ask(bank, {"type": "flag_status", "subject": m, "hop": hop,
-                                                "fields": ["flagged", "indicators"]})
-                if not status or status.get("status") != "ok":
-                    self.nodes[m] = {"bank": bank, "flagged": False, "indicators": [], "hop": hop,
-                                     "withheld": True}
-                    continue
-                self.nodes[m] = {"bank": bank, "flagged": True, "indicators": status["indicators"], "hop": hop}
-                if self.overreach_demo:  # the one deliberately non-compliant request, to show the policy agent
-                    self.overreach_demo = False
-                    await self.emit({"type": "note", "text": "The report drafter asks for the customer's name and "
-                                                             "balance to fill in the case file."})
-                    await self._ask(bank, {"type": "flag_status", "subject": m, "hop": hop,
-                                           "fields": ["name", "balance"]})
-                if hop >= self.max_hops:
-                    continue
-                linked = await self._ask(bank, {"type": "linked_counterparties", "subject": m, "hop": hop,
-                                                "fields": ["masked_id", "bank_code", "direction", "amount_band",
-                                                           "time_window"]})
-                if not linked or linked.get("status") != "ok":
-                    continue
-                cps, reporter = linked["counterparties"], bank
+        frontier: dict[str, dict] = {}  # masked_id -> lead {masked_id, bank_code, hop, direction, band, window, via}
+        done: set[str] = set()
+
+        async def visit(m: str, bank: str, hop: int):
+            done.add(m)
+            frontier.pop(m, None)
+            cps = await self._expand(m, bank, hop)
+            if cps is None:
+                return
             for c in cps:
-                self._add_edge(m, c["masked_id"], c["direction"], c["amount_band"], c["time_window"], reporter)
-            # follow likely laundering transfers first (bands near the 10k threshold), then the rest
-            for c in sorted(cps, key=lambda c: BAND_PRIORITY.get(c["amount_band"], 9)):
-                if c["masked_id"] not in seen:
-                    queue.append((c["masked_id"], c["bank_code"], hop + 1))
+                self._add_edge(m, c["masked_id"], c["direction"], c["amount_band"], c["time_window"], bank)
+                if c["masked_id"] not in done and c["masked_id"] not in frontier:
+                    frontier[c["masked_id"]] = {**c, "hop": hop + 1, "linked_to": m}
             await self.emit({"type": "graph", **self.graph_payload()})
+
+        await visit(mask(seed), lead.bank, 0)
+        limit = self.policy.rules["R6-limits"]["max_queries_per_case"]
+        while frontier and self.queries < limit:
+            # own-bank leads cost nothing to check: do them first, locally
+            own = [c for c in frontier.values() if c["bank_code"] == lead.bank]
+            if own:
+                for c in own:
+                    await visit(c["masked_id"], lead.bank, c["hop"])
+                continue
+            leads = sorted(frontier.values(), key=lambda c: (c["hop"], c["time_window"]))
+            if self.planner is None:
+                plan = {**planner_mod.heuristic_plan(leads, 3), "source": "rules", "model": None}
+            else:
+                await self.emit({"type": "thinking", "text": f"Planner is weighing {len(leads)} lead(s)."})
+                plan = await self.planner(self._known(), leads, 3, limit - self.queries)
+            await self.emit({"type": "plan", "leads": len(leads), "ask": plan["ask"], "drop": plan["drop"],
+                             "reason": plan["reason"], "source": plan["source"], "model": plan["model"]})
+            for m in plan["drop"]:
+                done.add(m)
+                frontier.pop(m, None)
+            for m in plan["ask"]:
+                if m in frontier and self.queries < limit:
+                    c = frontier[m]
+                    await visit(m, c["bank_code"], c["hop"])
+            if not plan["ask"] and not plan["drop"]:
+                break
         return self.result()
 
     # ---------- case builder (deterministic part) ----------

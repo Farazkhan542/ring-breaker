@@ -79,7 +79,7 @@ Launderers spread money-mule rings across several banks, so each bank sees only 
 - Swift ran experiments with 13 banks, with Google Cloud as a technology partner, on 10 million artificial transactions. A collaborative model was **twice as effective** at identifying known fraud as single-bank models. It used privacy-enhancing tech and federated learning, **not LLM agents**.
 - Singapore's MAS launched **COSMIC** in April 2024 with DBS, OCBC, UOB, Citibank, HSBC and Standard Chartered. Banks share customer information **only when "objectively defined indicators of suspicion" are present**.
 - BIS Innovation Hub's **Project Aurora** found collaborative analysis detects laundering networks more effectively than siloed analysis.
-- **Our own result on the TransXion benchmark (Section 9):** with perfect local flags, banks alone connect **22 of 369** laundering clusters, while banks together connect **369 of 369**. Realistic-flag numbers are being re-scored with the stricter rule in Section 9.3 before they go in the deck (see Section 9.4).
+- **Our own result (Section 9):** on synthetic three-bank worlds with strict scoring, banks alone find 1–4 of 14 rings, plain linking of masked IDs 9–12, and agent investigations 12–14, sharing under 2% of transactions. The Gemini planner cuts cross-bank questions by 58%. **Do not cite the old TransXion "369 of 369" or "16×" figures:** re-scored on 15 Oct with the strict rule, they do not hold (see Section 9.2).
 
 **Opening story for the video:** "Five accounts at three banks pass money in a loop. Each bank sees two ordinary-looking transfers. Together, they form a laundering ring that none of them can see alone."
 
@@ -281,6 +281,8 @@ Credit all datasets in the README and deck. Say clearly that no real customer da
 | 10% | 0.65 | 5 | 17 |
 | 15% | 0.49 | 8 | 16 |
 
+**Re-scored on 15 Oct (`experiments/transxion_rescore.py`, results/transxion.json):** under the strict rule, TransXion clusters recovered are alone 0–3, together 0–2, agent cases 0–7 of 369, even with perfect flags; pair precision is about 0.01. Laundering accounts of different rings also trade with each other normally, so linking flagged accounts merges rings. Present TransXion as a hard benchmark and a stated limitation, with the next step "link through suspicious transfers, not just suspicious accounts". The synthetic results and planner comparison are the headline evidence.
+
 **Known problem with these numbers (found on 15 Oct review):** the scoring credits a cluster as "recovered" if any group holds ≥50% of its accounts, so one giant group gets credit for every cluster inside it. The supervised 5% result (32 vs 2) comes from **a single group** (`collab_groups: 1`), and the unsupervised 10% result (31 vs 2) is also one group with group precision 0.0. On the synthetic data, 14 rings were found in only 11 groups, so some groups merge rings. Until re-scored, the most defensible realistic number is supervised 10%: **17 vs 5 (about 3.4×) across 56 groups, group precision 0.75**.
 
 ### 9.3 Metrics the harness must output
@@ -294,7 +296,7 @@ Credit all datasets in the README and deck. Say clearly that no real customer da
 ### 9.4 Honesty rules
 - Report real numbers only, with the method and seeds.
 - State that the synthetic results are easier than TransXion.
-- Headline claim: "**Sharing finds N× more rings than banks working alone, while sharing only masked IDs**", where N comes from the strict rule in Section 9.3, with the caveat that absolute recall is modest. Do **not** use the old "16×" figure unless it survives the strict rule.
+- Headline claim (synthetic, strict rule): "**Banks alone found 1–4 of 14 rings; agents working together found 12–14, sharing under 2% of transactions as masked IDs. The Gemini planner cut cross-bank questions by 58%.**" Earlier template: "Sharing finds N× more rings…", where N comes from the strict rule in Section 9.3, with the caveat that absolute recall is modest. Do **not** use the old "16×" figure unless it survives the strict rule.
 - Show the plain-linking baseline and the case-builder agent's split side by side. The improvement from splitting is the agents' measurable contribution.
 - The synthetic rules were tuned on seed 42, and the planted rings use the patterns the rules look for. Say so in the deck. The demo uses seed 42 (at seed 2026 one bank finds a ring alone).
 

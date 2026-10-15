@@ -1,0 +1,1 @@
+{"text": "{\n  \"ask\": [\n    \"M-f74f7483a682\",\n    \"M-720f1e897863\"\n  ],\n  \"drop\": [],\n  \"reason\": \"Both leads show high-value activity linked to the suspect account shortly after its creation. Following both directions will help determine if the suspect account is acting as a pass-through node for a laundering ring.\"\n}", "model": "gemini-3.1-flash-lite"}

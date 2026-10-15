@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-b9833c515dbe\",\n  \"M-d7514b78f1ba\",\n  \"M-f43279b31064\"\n],\n \"drop\": [],\n \"reason\": \"Investigating the initial outbound transfers connected to the rapid fan-out account M-a796bc7fca45 to trace the laundering ring.\"\n}", "model": "gemini-3.5-flash-lite"}

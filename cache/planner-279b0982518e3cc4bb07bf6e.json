@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-b6332e0011f4\",\n  \"M-af684c0ae7ba\"\n ],\n \"drop\": [],\n \"reason\": \"Both leads involve amounts close to the 10k reporting threshold and occur immediately adjacent to the suspicious rapid pass-through activity in the main case account.\"\n}", "model": "gemini-3.5-flash-lite"}

@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-e3c71c5ef0c6\",\n  \"M-299bb97b05a2\"\n ],\n \"drop\": [],\n \"reason\": \"Both leads are connected to flagged accounts showing rapid pass-through behavior. M-e3c71c5ef0c6 involves a 5k-8k amount band, which is close to the 10k threshold pattern observed in the primary case.\"\n}", "model": "gemini-3.5-flash-lite"}

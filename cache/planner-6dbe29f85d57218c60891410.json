@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-e36583d2a861\"\n ],\n \"drop\": [\n  \"M-09949b40589d\"\n ],\n \"reason\": \"Prioritizing the outgoing transfer just under the 10k threshold that matches the case's suspicious indicators. Dropping the earlier, smaller transfer as it is outside the relevant timeframe and resembles routine volume.\"\n}", "model": "gemini-3.5-flash-lite"}

@@ -1,0 +1,1 @@
+{"text": "{\n \"ask\": [\n  \"M-880bcb1deaaf\",\n  \"M-4a2a3bba6fef\"\n ],\n \"drop\": [],\n \"reason\": \"Both leads involve transactions just under the reporting threshold and directly link to the current suspicious account, warranting further investigation to determine if this is a laundering cycle.\"\n}", "model": "gemini-3.1-flash-lite"}
