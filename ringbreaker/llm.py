@@ -16,7 +16,7 @@ def llm_available() -> bool:
     if config.LLM_MODE == "off":
         return False
     vertex = os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("1", "true")
-    return bool(os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    return bool(os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY") or os.environ.get("RB_GEMMA_API_KEY")
                 or (vertex and os.environ.get("GOOGLE_CLOUD_PROJECT")))
 
 
@@ -25,13 +25,23 @@ def _cache_path(name: str, prompt: str):
     return config.CACHE_DIR / f"{name}-{key}.json"
 
 
+def _model(model: str):
+    """Gemma is served through the Gemini API with its own key (RB_GEMMA_API_KEY) even when Gemini models run on
+    Vertex AI; every other model uses the default backend from the environment."""
+    key = os.environ.get("RB_GEMMA_API_KEY")
+    if model.startswith("gemma") and key:
+        from google.adk.models.google_llm import Gemini
+        return Gemini(model=model, client_kwargs={"vertexai": False, "api_key": key})
+    return model
+
+
 async def _run_adk_agent(name: str, instruction: str, prompt: str, model: str, json_mode: bool) -> str:
     from google.adk.agents import LlmAgent
     from google.adk.runners import InMemoryRunner
     from google.genai import types
 
     gen_cfg = types.GenerateContentConfig(response_mime_type="application/json") if json_mode else None
-    agent = LlmAgent(name=name, model=model, instruction=instruction, generate_content_config=gen_cfg)
+    agent = LlmAgent(name=name, model=_model(model), instruction=instruction, generate_content_config=gen_cfg)
     runner = InMemoryRunner(agent=agent, app_name="ringbreaker")
     session = await runner.session_service.create_session(app_name="ringbreaker", user_id="officer")
     text = ""
