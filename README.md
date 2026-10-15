@@ -47,7 +47,8 @@ Browser ──► Cloud Run service (FastAPI)
              ├─ planner               Gemini (ADK) chooses which leads to follow
              ├─ bank assistants       Gemma (ADK) explains each bank's own flagged customers
              ├─ case writer, skeptic  Gemini (ADK) (live → cache → template fallback)
-             └─ decisions             Firestore (SQLite locally)
+             ├─ decisions             Firestore (SQLite locally)
+             └─ audit + results       BigQuery → Regulator tab and Looker Studio
 ```
 
 The lead bank's agent reaches the other banks' agents through real A2A HTTP calls, even though all three are hosted
@@ -79,6 +80,19 @@ offline in about 5 minutes on a laptop.
 **Performance (measured on a laptop):** one case built in-process takes about 40-50 ms with 6-15 cross-bank
 questions; the full demo, with live Gemini calls over A2A, finishes in about 36 seconds; officer decisions are
 stored in Firestore.
+
+## Regulator view (BigQuery and Looker Studio)
+
+Every cross-bank message from the policy agent's audit log, every finished case and every evaluation result is written
+to BigQuery (dataset `ringbreaker`: tables `audit_log`, `cases`, `eval_results`; views `v_bank_activity`,
+`v_blocked_by_rule`, `v_cases_daily`) with batch load jobs from a background thread, so investigations never wait on
+it. The app's **Regulator** tab reads the views back: questions answered, answers withheld, requests blocked and
+masked IDs shared per bank, plus recent cases. Without BigQuery the same tab is computed from the server's memory.
+
+Set up and load evaluation results: `RB_BQ_DATASET=ringbreaker GOOGLE_CLOUD_PROJECT=<project> python -m
+ringbreaker.analytics setup`, then `... export-eval`. For a Looker Studio report, create a report in Looker Studio,
+add a BigQuery data source pointing at `<project>.ringbreaker.v_bank_activity` (and the other views), and set
+`RB_LOOKER_URL` on the service so the Regulator tab links to it.
 
 ## Run locally
 

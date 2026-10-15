@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, store
+from . import analytics, config, store
 from .a2a_client import A2APeers
 from .bank_agent import BankAgent, a2a_routes
 from .casefile import write_case
@@ -41,6 +41,9 @@ async def lifespan(app: FastAPI):
     policy = Policy.load()
     agents = {b: BankAgent(partition(world, b), policy) for b in config.BANKS}
     STATE.update(world=world, policy=policy, agents=agents, peers=A2APeers(config.A2A_BASE_URL, config.BANKS))
+    if analytics.enabled():
+        policy.on_log = analytics.record_audit
+        asyncio.get_running_loop().run_in_executor(None, _bq_setup)
     log.info("bank agents ready in %.1fs (LLM available: %s, model %s)", time.time() - t0, llm_available(),
              config.MODEL_ID)
     warm = asyncio.create_task(_warm_explanations(world, agents))
@@ -59,6 +62,14 @@ async def _warm_explanations(world, agents):
                 await explain_flag(b, agents[b].flags[a])
             except Exception:
                 log.exception("warm-up failed")
+
+
+def _bq_setup():
+    try:
+        analytics.setup()
+        log.info("BigQuery dataset %s.%s ready", analytics.PROJECT, analytics.DATASET)
+    except Exception as e:
+        log.warning("BigQuery setup failed; regulator view will use memory: %s", str(e)[:200])
 
 
 app = FastAPI(title="Ring Breaker", lifespan=lifespan)
@@ -119,7 +130,11 @@ async def _demo_events():
     policy, agents, peers = STATE["policy"], STATE["agents"], STATE["peers"]
     q: asyncio.Queue = asyncio.Queue()
 
+    plan_sources = []
+
     async def emit(ev):
+        if ev.get("type") == "plan":
+            plan_sources.append(ev["source"])
         await q.put(ev)
         await asyncio.sleep(STEP_DELAY)
 
@@ -148,6 +163,11 @@ async def _demo_events():
                     side.append(asyncio.create_task(explain(n["bank"], n["id"], n["indicators"])))
             case = await write_case(result, blocked)
             STATE["cases"][result["case_id"]]["case"] = case
+            row = analytics.case_row(result, case, time.time() - t0, blocked,
+                                     max(set(plan_sources), key=plan_sources.count) if plan_sources else "none")
+            STATE.setdefault("case_rows", []).append(row)
+            analytics.record_case(row)
+            analytics.flush()
             await q.put({"type": "case_file", "case_id": result["case_id"], **case})
             await asyncio.wait(side, timeout=4)
             shared = [e for e in policy.audit if e["case_id"] == result["case_id"]]
@@ -200,6 +220,13 @@ def decisions(case_id: str):
 def audit(case_id: str | None = None):
     entries = [e for e in STATE["policy"].audit if case_id is None or e["case_id"] == case_id]
     return {"entries": entries[-500:]}
+
+
+@app.get("/api/regulator")
+def regulator():
+    """What a supervisor sees: questions, answers, withheld and blocked messages per bank, and recent cases."""
+    data = analytics.regulator_view(STATE["policy"].audit, STATE.get("case_rows", []))
+    return {**data, "looker_url": __import__("os").environ.get("RB_LOOKER_URL")}
 
 
 @app.get("/api/policy")

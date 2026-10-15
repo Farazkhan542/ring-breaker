@@ -21,6 +21,7 @@
     <button class="tab" aria-selected="true" data-tab="investigate">Investigation</button>
     <button class="tab" aria-selected="false" data-tab="results">Results</button>
     <button class="tab" aria-selected="false" data-tab="rules">Sharing rules</button>
+    <button class="tab" aria-selected="false" data-tab="regulator">Regulator</button>
     <button class="tab" aria-selected="false" data-tab="audit">Audit log</button>
   </nav>
 </header>
@@ -92,6 +93,31 @@
   <h1 class="page-h">Sharing rules</h1>
   <p class="lede">Modelled on Singapore's COSMIC principle: banks share only when objective indicators of suspicion are present. The policy agent enforces these rules on every request and answer. Not legal advice.</p>
   <ol id="rules" class="rules"></ol>
+</section>
+
+<section id="tab-regulator" class="panel-tab" hidden>
+  <h1 class="page-h">Regulator view</h1>
+  <p class="lede">What a supervisor sees across all cases: how many questions each bank answered, what it withheld, what the policy agent blocked and how much left each bank. Run the investigation to add a case.</p>
+  <p id="reg-source" class="status"></p>
+  <div id="reg-tiles" class="tiles"></div>
+  <div class="reg-grid">
+    <section class="card" aria-labelledby="reg-shared-h">
+      <div class="card-h"><h2 id="reg-shared-h">Masked IDs shared, by bank</h2></div>
+      <div id="reg-chart" class="reg-chart"></div>
+    </section>
+    <section class="card" aria-labelledby="reg-blocked-h">
+      <div class="card-h"><h2 id="reg-blocked-h">Requests blocked, by rule</h2></div>
+      <div class="table-wrap flat"><table id="reg-blocked"><thead><tr><th>Rule</th><th class="num">Blocked</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+  <section class="card" aria-labelledby="reg-banks-h">
+    <div class="card-h"><h2 id="reg-banks-h">Activity by bank</h2></div>
+    <div class="table-wrap flat"><table id="reg-banks"><thead><tr><th>Bank</th><th class="num" title="Allowed questions this bank received from other banks' agents">Questions received</th><th class="num" title="Answers with flagged-customer details">Answers sent</th><th class="num" title="Questions about customers this bank had not flagged, so nothing was shared">Answers withheld</th><th class="num" title="Distinct masked account IDs in this bank's answers">Masked IDs shared</th><th class="num" title="Transfers described in answers, as amount band and 6-hour window">Transfer records shared</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section class="card" aria-labelledby="reg-cases-h">
+    <div class="card-h"><h2 id="reg-cases-h">Recent cases</h2></div>
+    <div class="table-wrap flat"><table id="reg-cases"><thead><tr><th>Time (UTC)</th><th>Case</th><th>Lead bank</th><th class="num">Ring size</th><th class="num">Questions</th><th class="num">Blocked</th><th class="num">Confidence</th></tr></thead><tbody></tbody></table></div>
+  </section>
 </section>
 
 <section id="tab-audit" class="panel-tab" hidden>

@@ -26,7 +26,7 @@ $ba = (gcloud billing projects describe $Project --format="value(billingAccountN
 
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com `
   aiplatform.googleapis.com secretmanager.googleapis.com firestore.googleapis.com generativelanguage.googleapis.com `
-  billingbudgets.googleapis.com
+  billingbudgets.googleapis.com bigquery.googleapis.com
 
 # Firestore (native mode) for officer decisions; an "already exists" error is fine.
 $ErrorActionPreference = "Continue"
@@ -49,7 +49,7 @@ if (-not $exists) {
 # Runtime and build service account: Vertex AI, Firestore, secrets, and building from source.
 $num = gcloud projects describe $Project --format="value(projectNumber)"
 $sa = "$num-compute@developer.gserviceaccount.com"
-foreach ($role in "roles/aiplatform.user", "roles/datastore.user", "roles/run.builder") {
+foreach ($role in "roles/aiplatform.user", "roles/datastore.user", "roles/run.builder", "roles/bigquery.dataEditor", "roles/bigquery.jobUser") {
   gcloud projects add-iam-policy-binding $Project --member="serviceAccount:$sa" --role=$role --condition=None | Out-Null
 }
 gcloud secrets add-iam-policy-binding rb-consortium-key --project $Project --member="serviceAccount:$sa" `
@@ -67,7 +67,7 @@ if ($env:GOOGLE_API_KEY) {
 
 gcloud run deploy ring-breaker --source . --region $Region --project $Project --allow-unauthenticated --quiet `
   --min-instances 1 --max-instances 3 --cpu 1 --memory 1Gi --timeout 300 `
-  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$Project,GOOGLE_CLOUD_LOCATION=global,RB_STORE=firestore" `
+  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$Project,GOOGLE_CLOUD_LOCATION=global,RB_STORE=firestore,RB_BQ_DATASET=ringbreaker,RB_BQ_LOCATION=$Region" `
   --set-secrets $secrets
 
 gcloud run services describe ring-breaker --region $Region --project $Project --format="value(status.url)"

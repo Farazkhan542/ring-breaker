@@ -137,11 +137,26 @@ main { max-width: 1320px; margin: 0 auto; padding: 24px; }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-weight: 600; color: var(--muted); }
-td.num, th.num { text-align: right; font-family: var(--mono); }
+td.num, th.num { text-align: right; }
+td.num { font-family: var(--mono); }
 .table-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
 #metrics h2 { font-size: 20px; margin: 24px 0 8px; }
 #metrics .note { color: var(--muted); font-size: 13px; max-width: 80ch; }
 [title] { text-decoration-style: dotted; }
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0 20px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.tile .v { font: 600 32px var(--display); display: block; }
+.tile .k { color: var(--muted); font-size: 13px; }
+.reg-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.reg-chart { position: relative; }
+.reg-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.reg-chart .bar { cursor: default; }
+.reg-chart .bar:focus { outline: none; }
+.reg-chart .bar:focus rect.hit, .reg-chart .bar:hover rect.hit { fill: rgba(20, 32, 43, .05); }
+.reg-chart text { font: 13px var(--body); fill: var(--ink); }
+.reg-chart text.muted { fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; font-size: 12px; padding: 6px 8px; border-radius: 6px; white-space: nowrap; }
+.table-wrap.flat { border: 0; }
 .rules li { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
 .rules .rid { font: 500 12px var(--mono); color: var(--muted); }
 .foot { max-width: 1320px; margin: 0 auto; padding: 8px 24px 32px; color: var(--muted); font-size: 12px; }
@@ -149,7 +164,8 @@ td.num, th.num { text-align: right; font-family: var(--mono); }
 @media (max-width: 960px) {
   .hero, .stage, .case-grid { grid-template-columns: 1fr; }
   .run { text-align: left; }
-  .banks, .shared, .approvals { grid-template-columns: 1fr; }
+  .banks, .shared, .approvals, .reg-grid { grid-template-columns: 1fr; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
   main { padding: 16px; }
   .top { padding: 10px 16px; }
 }

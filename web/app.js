@@ -16,6 +16,7 @@ document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () 
   if (t.dataset.tab === "results") loadMetrics();
   if (t.dataset.tab === "rules") loadRules();
   if (t.dataset.tab === "audit") loadAudit();
+  if (t.dataset.tab === "regulator") loadRegulator();
 }));
 
 /* ---------- markdown (escaped first, so model output can't inject HTML) ---------- */
@@ -213,6 +214,57 @@ async function loadRules() {
 async function loadAudit() {
   const d = await (await fetch("/api/audit")).json();
   $("#audit tbody").innerHTML = d.entries.slice().reverse().map((e) => `<tr><td class="mono">${esc(e.ts.slice(11, 19))}</td><td>${esc(e.from)} → ${esc(e.to)}</td><td>${esc(e.kind)}</td><td class="mono">${esc(JSON.stringify(e.payload)).slice(0, 220)}</td><td>${e.allowed ? "allowed" : "<strong>blocked</strong>"} · ${esc(e.rule_id)}</td></tr>`).join("") || `<tr><td colspan="5">No cross-bank messages yet. Run the investigation first.</td></tr>`;
+}
+const MARK = { BANK_A: "#009688", BANK_B: "#9a5800", BANK_C: "#6a3fb5" }; // chart fills, validated for colour-blind separation
+async function loadRegulator() {
+  const r = await fetch("/api/regulator");
+  if (!r.ok) { $("#reg-source").textContent = "The regulator view isn't available right now. Reload the page."; return; }
+  const d = await r.json();
+  $("#reg-source").innerHTML = d.source === "bigquery"
+    ? `Live from BigQuery · dataset <code>${esc(d.dataset)}</code>${d.looker_url ? ` · <a href="${esc(d.looker_url)}" target="_blank" rel="noopener">Open the Looker Studio report</a>` : ""}`
+    : "From this server's memory (BigQuery is not connected here).";
+  const banks = d.by_bank || [], sum = (k) => banks.reduce((a, b) => a + (b[k] || 0), 0);
+  const blocked = (d.blocked_by_rule || []).reduce((a, b) => a + b.blocked, 0);
+  const tiles = [
+    [sum("questions_received"), "questions answered between banks", "Allowed questions across all cases"],
+    [sum("answers_withheld"), "answers withheld", "Questions about customers the bank had not flagged: nothing shared"],
+    [blocked, "requests blocked by policy", "Requests the policy agent refused, such as asking for a name or balance"],
+    [sum("masked_ids_shared"), "masked IDs shared", "Distinct masked account IDs that appeared in answers"],
+  ];
+  $("#reg-tiles").innerHTML = tiles.map(([v, k, t]) => `<div class="tile" title="${esc(t)}"><span class="v">${Number(v).toLocaleString()}</span><span class="k">${esc(k)}</span></div>`).join("");
+  drawSharedChart(banks);
+  $("#reg-blocked tbody").innerHTML = (d.blocked_by_rule || []).map((b) => `<tr><td>${esc(b.rule_id)}</td><td class="num">${b.blocked}</td></tr>`).join("") || `<tr><td colspan="2">Nothing blocked yet.</td></tr>`;
+  $("#reg-banks tbody").innerHTML = banks.map((b) => `<tr><td><span class="shape ${SHAPE[b.bank] || ""}" aria-hidden="true" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>${NICE[b.bank] || esc(b.bank)}</td>${["questions_received", "answers_sent", "answers_withheld", "masked_ids_shared", "records_shared"].map((k) => `<td class="num">${b[k] ?? 0}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="6">No cross-bank messages yet. Run the investigation first.</td></tr>`;
+  $("#reg-cases tbody").innerHTML = (d.cases || []).map((c) => `<tr><td class="mono">${esc(String(c.ts).slice(0, 19).replace("T", " "))}</td><td class="mono">${esc(c.case_id)}</td><td>${NICE[c.lead_bank] || esc(c.lead_bank)}</td><td class="num">${c.ring_size}</td><td class="num">${c.questions}</td><td class="num">${c.blocked}</td><td class="num">${c.confidence}</td></tr>`).join("") || `<tr><td colspan="7">No cases yet. Run the investigation first.</td></tr>`;
+}
+function drawSharedChart(banks) {
+  const rows = BANKS.map((b) => ({ bank: b, v: (banks.find((x) => x.bank === b) || {}).masked_ids_shared || 0, rec: (banks.find((x) => x.bank === b) || {}).records_shared || 0 }));
+  const max = Math.max(1, ...rows.map((r) => r.v)), W = 560, L = 84, R = 48, BH = 18, ROW = 44, H = rows.length * ROW + 24;
+  const x = (v) => L + (W - L - R) * v / max;
+  const ticks = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
+  const bars = rows.map((r, i) => {
+    const y = 12 + i * ROW, w = Math.max(0, x(r.v) - L), rad = Math.min(4, w / 2);
+    const path = w > 0 ? `M${L} ${y} H${L + w - rad} Q${L + w} ${y} ${L + w} ${y + rad} V${y + BH - rad} Q${L + w} ${y + BH} ${L + w - rad} ${y + BH} H${L} Z` : "";
+    return `<g class="bar" tabindex="0" data-i="${i}" aria-label="${NICE[r.bank]}: ${r.v} masked IDs, ${r.rec} transfer records shared">
+      <rect class="hit" x="0" y="${y - 12}" width="${W}" height="${ROW}" fill="transparent"/>
+      <text x="${L - 10}" y="${y + 13}" text-anchor="end">${NICE[r.bank]}</text>
+      <path d="${path}" fill="${MARK[r.bank]}"/>
+      <text class="muted" x="${L + w + 6}" y="${y + 13}">${r.v}</text></g>`;
+  }).join("");
+  const grid = ticks.map((t) => `<line x1="${x(t)}" y1="4" x2="${x(t)}" y2="${H - 18}" stroke="#e3e8ee"/><text class="muted" x="${x(t)}" y="${H - 2}" text-anchor="middle">${t}</text>`).join("");
+  $("#reg-chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Masked IDs shared by each bank; the activity table below has the same numbers">${grid}<line x1="${L}" y1="4" x2="${L}" y2="${H - 18}" stroke="#8a97a6"/>${bars}</svg>`;
+  const box = $("#reg-chart");
+  box.insertAdjacentHTML("beforeend", `<div class="tip" role="status" hidden></div>`);
+  const tip = box.querySelector(".tip");
+  const show = (g) => {
+    const r = rows[+g.dataset.i], b = g.getBoundingClientRect(), c = box.getBoundingClientRect();
+    tip.textContent = `${NICE[r.bank]}: ${r.v} masked IDs, ${r.rec} transfer records`;
+    tip.hidden = false; tip.style.left = `${Math.min(b.left - c.left + 90, c.width - 220)}px`; tip.style.top = `${b.top - c.top + 40}px`;
+  };
+  box.querySelectorAll(".bar").forEach((g) => {
+    g.addEventListener("mouseenter", () => show(g)); g.addEventListener("focus", () => show(g));
+    g.addEventListener("mouseleave", () => (tip.hidden = true)); g.addEventListener("blur", () => (tip.hidden = true));
+  });
 }
 async function loadMetrics() {
   const r = await fetch("/api/metrics");

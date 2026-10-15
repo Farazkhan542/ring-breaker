@@ -9,3 +9,4 @@ networkx>=3.3
 pyyaml>=6.0
 httpx>=0.28
 google-cloud-firestore>=2.19
+google-cloud-bigquery>=3.25

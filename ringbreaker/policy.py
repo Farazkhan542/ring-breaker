@@ -2,6 +2,7 @@
 import re
 import threading
 from dataclasses import dataclass, field
+from typing import Callable
 from datetime import datetime, timezone
 
 import yaml
@@ -24,6 +25,7 @@ class Policy:
     rules: dict
     audit: list = field(default_factory=list)
     _lock: threading.Lock = field(default_factory=threading.Lock)
+    on_log: Callable[[dict], None] | None = None  # e.g. the BigQuery sink
 
     @classmethod
     def load(cls, path=config.POLICY_FILE) -> "Policy":
@@ -96,5 +98,7 @@ class Policy:
                  "rule_id": decision.rule_id, "rule_text": decision.rule_text, "detail": decision.detail}
         with self._lock:
             self.audit.append(entry)
-            del self.audit[:-20000]  # bounded in memory; production writes to Cloud Logging / BigQuery
+            del self.audit[:-20000]  # bounded in memory; the full log goes to BigQuery when enabled
+        if self.on_log:
+            self.on_log(entry)
         return entry
