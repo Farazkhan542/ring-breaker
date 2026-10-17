@@ -16,8 +16,8 @@ PLANNER_MODELS = [m for m in os.environ.get("RB_PLANNER_MODELS", "gemini-3.5-fla
 # Bank-side explainer: an open Gemma model a bank could host inside its own walls; Flash-Lite as backup.
 BANK_MODELS = [m for m in os.environ.get("RB_BANK_MODELS", "gemma-4-26b-a4b-it,gemma-4-31b-it,gemini-3.5-flash-lite,gemini-2.5-flash-lite").split(",") if m]
 LLM_MODE = os.environ.get("RB_LLM", "auto")  # auto | off
-LLM_TIMEOUT_S = float(os.environ.get("RB_LLM_TIMEOUT_S", "12"))  # per model attempt
-LLM_BUDGET_S = float(os.environ.get("RB_LLM_BUDGET_S", "28"))  # all attempts; then cache, then template
+LLM_TIMEOUT_S = float(os.environ.get("RB_LLM_TIMEOUT_S", "9"))  # per model attempt
+LLM_BUDGET_S = float(os.environ.get("RB_LLM_BUDGET_S", "20"))  # all attempts; then cache, then template
 CACHE_FIRST = os.environ.get("RB_CACHE_FIRST", "false").lower() == "true"  # true: instant demo from cache
 
 # Consortium masking key: Secret Manager in production (mounted as env var on Cloud Run).

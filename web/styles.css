@@ -45,6 +45,30 @@ main { max-width: 1320px; margin: 0 auto; padding: 24px; }
 .primary:hover { background: #24384b; }
 .primary:disabled { background: var(--muted); cursor: progress; }
 .status { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.gh { font: 500 14px var(--body); color: var(--ink); padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; text-decoration: none; margin-left: 6px; }
+.gh:hover { background: var(--paper); }
+.steps { list-style: none; padding: 0; margin: 0 0 28px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.steps a { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); text-decoration: none; height: 100%; transition: border-color .2s, box-shadow .2s; }
+.steps a:hover { border-color: var(--muted); }
+.steps .n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 600 15px var(--display); border: 2px solid var(--line); color: var(--muted); background: var(--panel); }
+.steps b { display: block; font: 600 16px var(--display); }
+.steps small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; margin-top: 2px; }
+.steps li.active a { border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--ink); }
+.steps li.active .n { background: var(--ink); border-color: var(--ink); color: #fff; }
+.steps li.done .n { background: var(--bank-a); border-color: var(--bank-a); color: #fff; }
+.steps li.done b::after { content: " · done"; font: 500 12px var(--body); color: var(--bank-a); }
+.ring-banner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; background: var(--ink); color: #eef2f6; border-radius: 10px; padding: 22px 26px; margin-bottom: 20px; }
+.ring-banner .eyebrow { margin: 0 0 4px; font: 600 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: #9fd9d6; }
+.ring-banner h2 { font-size: 30px; margin: 0 0 6px; }
+.ring-banner p { margin: 0; color: #c9d4de; max-width: 60ch; }
+.ring-banner .chips { display: grid; grid-template-columns: repeat(4, auto); gap: 10px; }
+.ring-banner .chip { background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .14); border-radius: 8px; padding: 10px 12px; min-width: 96px; }
+.ring-banner .chip .v { display: block; font: 600 24px var(--display); color: #fff; }
+.ring-banner .chip .k { font-size: 12px; color: #c9d4de; }
+.badge { display: inline-block; font: 600 12px var(--body); letter-spacing: .02em; background: var(--ink); color: #fff; border-radius: 999px; padding: 2px 9px; margin-right: 6px; vertical-align: 1px; }
+.bank li.more { display: none; }
+.bank.expanded li.more { display: flex; }
+.more-btn { margin-top: 6px; font: 500 13px var(--body); background: none; border: 0; padding: 4px 0; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .section-h { font-size: 13px; font-family: var(--body); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--muted); margin: 0 0 10px; }
 .page-h { font-size: 32px; }
@@ -160,12 +184,17 @@ td.num { font-family: var(--mono); }
 .rules li { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
 .rules .rid { font: 500 12px var(--mono); color: var(--muted); }
 .foot { max-width: 1320px; margin: 0 auto; padding: 8px 24px 32px; color: var(--muted); font-size: 12px; }
+.foot p { margin: 4px 0; }
+.foot a { color: var(--ink); }
 
 @media (max-width: 960px) {
   .hero, .stage, .case-grid { grid-template-columns: 1fr; }
   .run { text-align: left; }
   .banks, .shared, .approvals, .reg-grid { grid-template-columns: 1fr; }
   .tiles { grid-template-columns: repeat(2, 1fr); }
+  .steps { grid-template-columns: repeat(2, 1fr); }
+  .ring-banner { grid-template-columns: 1fr; }
+  .ring-banner .chips { grid-template-columns: repeat(2, 1fr); }
   main { padding: 16px; }
   .top { padding: 10px 16px; }
 }

@@ -40,16 +40,22 @@ async function loadBanks() {
   const d = await (await fetch("/api/banks")).json();
   indicatorHelp = d.indicator_help;
   $("#banks").innerHTML = d.banks.map((b) => {
-    const rows = b.flagged.slice().sort((x, y) => y.in_demo_case - x.in_demo_case).map((f) =>
-      `<li class="${f.in_demo_case ? "case" : ""}"><span class="mono">${esc(f.account)}</span><span class="ind">${f.indicators.map((i) => `<span title="${esc(indicatorHelp[i] || "")}">${esc(i)}</span>`).join(", ")}</span></li>`).join("");
+    const rows = b.flagged.slice().sort((x, y) => y.in_demo_case - x.in_demo_case).map((f, i) =>
+      `<li class="${f.in_demo_case ? "case" : i >= Math.max(3, b.case_customers_flagged) ? "more" : ""}"><span class="mono">${esc(f.account)}</span><span class="ind">${f.indicators.map((i) => `<span title="${esc(indicatorHelp[i] || "")}">${esc(i)}</span>`).join(", ")}</span></li>`).join("");
     return `<article class="bank" style="--c:${COLOR[b.bank]}">
       <div class="bank-h"><span class="shape ${SHAPE[b.bank]}" aria-hidden="true"></span><h3>${NICE[b.bank]}</h3></div>
       <p class="facts"><span title="Customers whose data this bank's agent can see">${b.customers.toLocaleString()} customers</span> · <span title="Transactions touching this bank's customers">${b.transactions_visible.toLocaleString()} transactions visible</span> · <span title="Customers with a behaviour red flag plus at least one more indicator">${b.flagged.length} flagged</span></p>
       <ul aria-label="${NICE[b.bank]} flagged customers (internal IDs, never shared)">${rows}</ul>
-      <p class="alone"><strong>Alone:</strong> ${b.case_customers_flagged} of its flagged customers belong to today's case, but their transfers lead to other banks. <strong>No ring found.</strong></p>
+      ${b.flagged.length > 3 ? `<button class="more-btn" aria-expanded="false">Show all ${b.flagged.length} flagged</button>` : ""}
+      <p class="alone"><span class="badge">No ring found</span> ${b.case_customers_flagged} of its flagged customers belong to today’s case, but their money goes to other banks.</p>
     </article>`;
   }).join("");
   $("#banks").setAttribute("aria-busy", "false");
+  $("#banks").querySelectorAll(".more-btn").forEach((btn) => btn.addEventListener("click", () => {
+    const card = btn.closest(".bank"), open = card.classList.toggle("expanded");
+    btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = open ? "Show fewer" : `Show all ${card.querySelectorAll("li").length} flagged`;
+  }));
 }
 
 /* ---------- ring map: three bank lanes ---------- */
@@ -95,7 +101,23 @@ function drawMap(final) {
 }
 
 /* ---------- conversation + sharing counters ---------- */
-let q = 0, shared, seedId = null, explanations = {};
+let q = 0, shared, seedId = null, explanations = {}, blockedCount = 0;
+function setStep(n) {
+  document.querySelectorAll(".steps li").forEach((li) => {
+    const s = +li.dataset.step;
+    li.classList.toggle("done", s < n); li.classList.toggle("active", s === n);
+    if (s === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+  });
+}
+function showRingBanner(ev) {
+  const withheld = BANKS.reduce((a, b) => a + shared[b].withheld, 0);
+  const chip = (v, k, t) => `<div class="chip" title="${esc(t)}"><span class="v">${v}</span><span class="k">${esc(k)}</span></div>`;
+  const el = $("#ring-banner");
+  el.innerHTML = `<div><p class="eyebrow">Step 3 · Ring found</p><h2>${ev.ring.length} accounts across ${ev.banks.length} banks</h2>
+    <p>No single bank could see this. Gemini is now writing the joint case file, and a skeptic agent is arguing the innocent side.</p></div>
+    <div class="chips">${chip(q, "questions between banks", "Allowed A2A questions in this case")}${chip(blockedCount, "blocked by policy", "Requests the policy agent refused")}${chip(withheld, "answers withheld", "Customers not flagged by their own bank, so nothing was shared")}${chip(esc($("#shared-pct").textContent.split(" ")[0]), "of transactions shared", "Transfer records shared, as a share of all transactions in the three banks")}</div>`;
+  el.hidden = false;
+}
 function srcModel(x) { return x.source === "fallback" ? "rule-based text" : `${esc(x.model)}${x.source === "cache" ? " · cached" : ""}`; }
 function fillExplanations() {
   document.querySelectorAll("[data-explain]").forEach((el) => {
@@ -133,7 +155,7 @@ function onEvent(ev) {
       const p = ev.payload;
       const forbidden = (p.fields || []).filter((f) => ["name", "balance", "address", "account_number", "exact_amount", "transaction_history"].includes(f));
       const ask = forbidden.length ? `Asks for ${forbidden.map((f) => `<span class="redact-label">${esc(f)}</span>`).join(" and ")} of <span class="mono">${esc(p.subject)}</span>` : `${esc(QTEXT[p.type] || p.type)} <span class="mono">${esc(p.subject)}</span>`;
-      if (ev.allowed) { q++; $("#qcount").textContent = `${q} question${q === 1 ? "" : "s"}`; }
+      if (ev.allowed) { q++; $("#qcount").textContent = `${q} question${q === 1 ? "" : "s"}`; } else blockedCount++;
       addConvo(`<span class="verdict">${ev.allowed ? "✓ allowed" : "✕ blocked"}</span> <span class="who">${NICE[ev.from]} → ${NICE[ev.to]}</span> · A2A<br>${ask}<span class="rule">${esc(ev.rule_id)}: ${esc(ev.detail || ev.rule_text)}</span>`, ev.allowed ? "ok" : "blocked");
       break;
     }
@@ -161,9 +183,9 @@ function onEvent(ev) {
     }
     case "graph": graph = ev; drawMap(false); break;
     case "ring":
-      graph = { nodes: ev.nodes, edges: ev.edges }; drawMap(true);
+      graph = { nodes: ev.nodes, edges: ev.edges }; drawMap(true); setStep(3); showRingBanner(ev);
       addConvo(`Ring found: <strong>${ev.ring.length} accounts across ${ev.banks.length} banks</strong> (${ev.banks.map((b) => NICE[b]).join(", ")}).`, "phase"); break;
-    case "case_file": showCase(ev); break;
+    case "case_file": showCase(ev); setStep(4); break;
     case "done":
       $("#status").textContent = `Done in ${ev.seconds}s · ${ev.queries} questions · ${ev.blocked} blocked by policy`;
       $("#run").disabled = false; $("#run").textContent = "Run it again"; break;
@@ -193,6 +215,7 @@ function showCase(ev) {
       body: JSON.stringify({ bank, decision: btn.dataset.d, reason: box.querySelector("input").value }) });
     const d = await r.json(), mine = d.decisions[bank];
     box.querySelector(".decided").textContent = mine ? `Saved: ${mine.decision.replace("_", " ")} at ${mine.ts.slice(11, 19)} UTC` : "Could not save the decision. Try again.";
+    if (mine) setStep(5);
   }));
 }
 
@@ -200,7 +223,8 @@ function showCase(ev) {
 $("#run").addEventListener("click", () => {
   $("#run").disabled = true; $("#status").textContent = "Agents are talking…";
   $("#convo").innerHTML = ""; $("#case").hidden = true; q = 0; $("#qcount").textContent = "0 questions";
-  graph = { nodes: [], edges: [] }; order = []; seedId = null; explanations = {}; resetShared(); renderShared();
+  graph = { nodes: [], edges: [] }; order = []; seedId = null; explanations = {}; blockedCount = 0; resetShared(); renderShared();
+  $("#ring-banner").hidden = true; setStep(2);
   const es = new EventSource("/api/demo/run");
   es.onmessage = (m) => { const ev = JSON.parse(m.data); onEvent(ev); if (ev.type === "done" || ev.type === "error") es.close(); };
   es.onerror = () => { es.close(); if ($("#run").disabled) { $("#status").textContent = "Connection lost. Run it again."; $("#run").disabled = false; } };
@@ -278,5 +302,5 @@ async function loadMetrics() {
   $("#metrics").innerHTML = html + `<p class="note">Generated ${esc(m.generated)}. ${esc(m.caveat || "")}</p>`;
 }
 
-resetShared(); renderShared();
+resetShared(); renderShared(); setStep(1);
 loadBanks().catch(() => { $("#banks").innerHTML = `<p>Bank agents are starting. Reload in a few seconds.</p>`; });

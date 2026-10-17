@@ -23,6 +23,7 @@
     <button class="tab" aria-selected="false" data-tab="rules">Sharing rules</button>
     <button class="tab" aria-selected="false" data-tab="regulator">Regulator</button>
     <button class="tab" aria-selected="false" data-tab="audit">Audit log</button>
+    <a class="gh" href="https://github.com/Farazkhan542/ring-breaker" target="_blank" rel="noopener">Code</a>
   </nav>
 </header>
 
@@ -39,9 +40,17 @@
     </div>
   </div>
 
-  <h2 class="section-h">Each bank, working alone</h2>
+  <ol class="steps" aria-label="How the investigation unfolds">
+    <li data-step="1"><a href="#banks-h"><span class="n" aria-hidden="true">1</span><span><b>Each bank alone</b><small>Sees a few odd transfers, no ring</small></span></a></li>
+    <li data-step="2"><a href="#stage"><span class="n" aria-hidden="true">2</span><span><b>Agents ask each other</b><small>Masked IDs, every message policy-checked</small></span></a></li>
+    <li data-step="3"><a href="#ring-banner"><span class="n" aria-hidden="true">3</span><span><b>Ring found</b><small>Gemini writes the case, a skeptic pushes back</small></span></a></li>
+    <li data-step="4"><a href="#approvals-h"><span class="n" aria-hidden="true">4</span><span><b>Officers decide</b><small>Nothing is filed automatically</small></span></a></li>
+  </ol>
+
+  <h2 class="section-h" id="banks-h">Step 1 · Each bank, working alone</h2>
   <div id="banks" class="banks" aria-busy="true"></div>
 
+  <h2 class="section-h" id="stage">Step 2 · The agents investigate together</h2>
   <div class="stage">
     <section class="card map-card" aria-labelledby="map-h">
       <div class="card-h">
@@ -59,6 +68,8 @@
       <ol id="convo" class="convo" aria-live="polite"></ol>
     </section>
   </div>
+
+  <section id="ring-banner" class="ring-banner" aria-live="polite" hidden></section>
 
   <section class="card" aria-labelledby="shared-h">
     <div class="card-h"><h2 id="shared-h">What left each bank</h2><span id="shared-pct" class="pill" title="Transfer records shared, as a share of all transactions in the three banks">0% of transactions shared</span></div>
@@ -78,7 +89,7 @@
         <div id="confidence" class="confidence"></div>
       </article>
     </div>
-    <h3 class="col-h">Officer sign-off: each bank decides about its own customers</h3>
+    <h3 class="col-h" id="approvals-h">Step 4 · Officer sign-off: each bank decides about its own customers</h3>
     <div id="approvals" class="approvals"></div>
   </section>
 </section>
@@ -128,7 +139,8 @@
 </main>
 
 <footer class="foot">
-  <p>Synthetic data only; no real customer data. Built for the Google Cloud AI Builder Cup 2026 with Gemini, Google ADK and A2A on Cloud Run.</p>
+  <p><b>Ring Breaker</b> by team DA REAL OG’s · Google Cloud AI Builder Cup 2026 · BFSI</p>
+  <p>Synthetic data only; no real customer data. Built with Gemini, Gemma, Google ADK and A2A on Cloud Run, with Firestore and BigQuery. <a href="https://github.com/Farazkhan542/ring-breaker" target="_blank" rel="noopener">Source code</a></p>
 </footer>
 <script src="/static/app.js"></script>
 </body>

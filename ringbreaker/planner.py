@@ -37,7 +37,7 @@ async def plan_next(case_known: list[dict], candidates: list[dict], max_ask: int
     facts = {"case_so_far": case_known, "candidate_leads": candidates, "max_ask": max_ask,
              "questions_left": questions_left}
     res = await generate("planner", PLANNER_INSTRUCTION, facts, heuristic_plan(candidates, max_ask),
-                         models=config.PLANNER_MODELS, json_mode=True, timeout=8, budget=12)
+                         models=config.PLANNER_MODELS, json_mode=True, timeout=5, budget=7)
     plan, valid = res["data"] or {}, {c["masked_id"] for c in candidates}
     ask = [m for m in plan.get("ask", []) if m in valid][:max_ask]
     drop = [m for m in plan.get("drop", []) if m in valid and m not in ask]
