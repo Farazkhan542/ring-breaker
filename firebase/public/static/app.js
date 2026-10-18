@@ -11,10 +11,38 @@ const STATIC = !!window.RB_STATIC;
 if (STATIC) {
   const realFetch = window.fetch.bind(window);
   const SNAP = { "/api/banks": "banks", "/api/policy": "policy", "/api/audit": "audit", "/api/metrics": "metrics", "/api/regulator": "regulator" };
+  let fsdb = null;  // Firestore (free Spark plan); rules allow only creating and reading officer decisions
+  const firestore = async () => {
+    if (fsdb !== null) return fsdb;
+    try {
+      const cfg = await (await realFetch("/data/firebase-config.json")).json();
+      const app = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      fsdb = { fs, db: fs.getFirestore(app.initializeApp(cfg)) };
+    } catch (e) { fsdb = false; }
+    return fsdb;
+  };
+  const firestoreDecisions = async (caseId, post) => {
+    const f = await firestore();
+    if (!f) return null;
+    const { fs, db } = f;
+    const col = fs.collection(db, "decisions");
+    if (post) await fs.addDoc(col, { case_id: caseId, bank: post.bank, decision: post.decision, reason: post.reason || "", ts: fs.serverTimestamp() });
+    const snap = await fs.getDocs(fs.query(col, fs.where("case_id", "==", caseId)));
+    const rows = snap.docs.map((d) => d.data()).filter((r) => r.ts).sort((a, b) => a.ts.toMillis() - b.ts.toMillis());
+    const latest = {};
+    rows.forEach((r) => { latest[r.bank] = { decision: r.decision, reason: r.reason, ts: r.ts.toDate().toISOString() }; });
+    return { case_id: caseId, decisions: latest, history: rows.length, store: "firestore" };
+  };
   window.fetch = async (url, opts = {}) => {
     const path = String(url).split("?")[0];
     const m = path.match(/^\/api\/cases\/([^/]+)\/decisions$/);
-    if (m) {  // officer decisions are kept in this browser only
+    if (m) {
+      try {
+        const post = (opts.method || "GET") === "POST" ? JSON.parse(opts.body) : null;
+        const res = await firestoreDecisions(m[1], post);
+        if (res) return new Response(JSON.stringify(res), { headers: { "Content-Type": "application/json" } });
+      } catch (e) { /* Firestore unreachable: fall back to this browser */ }
       let all = {};
       try { all = JSON.parse(localStorage.getItem("rb-decisions") || "{}"); } catch (e) { all = {}; }
       const mine = all[m[1]] || {};
@@ -249,7 +277,7 @@ function showCase(ev) {
     const r = await fetch(`/api/cases/${ev.case_id}/decisions`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bank, decision: btn.dataset.d, reason: box.querySelector("input").value }) });
     const d = await r.json(), mine = d.decisions[bank];
-    box.querySelector(".decided").textContent = mine ? `Saved: ${mine.decision.replace("_", " ")} at ${mine.ts.slice(11, 19)} UTC` : "Could not save the decision. Try again.";
+    box.querySelector(".decided").textContent = mine ? `Saved${d.store === "firestore" ? " to Firestore" : ""}: ${mine.decision.replace("_", " ")} at ${mine.ts.slice(11, 19)} UTC` : "Could not save the decision. Try again.";
     if (mine) setStep(5);
   }));
 }
