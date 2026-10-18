@@ -1,6 +1,8 @@
 # Ring Breaker
 
 **Bank agents that catch money-laundering rings together, without sharing customer data.**
+
+**Live demo: https://ring-breaker-cup.web.app** (no login, synthetic data). The public demo is hosted on Firebase Hosting and replays a real run recorded from the live system below (`ringbreaker/export_static.py`); the full multi-agent backend runs locally or on Cloud Run (`deploy.ps1`).
 Google Cloud AI Builder Cup 2026 · Theme: BFSI (intelligent risk, fraud and financial experiences)
 
 Launderers spread money-mule rings across several banks, so each bank sees only a harmless-looking slice. In Ring

@@ -5,6 +5,41 @@ const COLOR = { BANK_A: "var(--bank-a)", BANK_B: "var(--bank-b)", BANK_C: "var(-
 const NICE = { BANK_A: "Bank A", BANK_B: "Bank B", BANK_C: "Bank C" };
 const TOTAL_TX = 52306; // all transactions in the synthetic three-bank world
 const $ = (s) => document.querySelector(s);
+
+/* ---------- hosted replay mode (Firebase Hosting, no backend): data comes from a recorded real run ---------- */
+const STATIC = !!window.RB_STATIC;
+if (STATIC) {
+  const realFetch = window.fetch.bind(window);
+  const SNAP = { "/api/banks": "banks", "/api/policy": "policy", "/api/audit": "audit", "/api/metrics": "metrics", "/api/regulator": "regulator" };
+  window.fetch = async (url, opts = {}) => {
+    const path = String(url).split("?")[0];
+    const m = path.match(/^\/api\/cases\/([^/]+)\/decisions$/);
+    if (m) {  // officer decisions are kept in this browser only
+      let all = {};
+      try { all = JSON.parse(localStorage.getItem("rb-decisions") || "{}"); } catch (e) { all = {}; }
+      const mine = all[m[1]] || {};
+      if ((opts.method || "GET") === "POST") {
+        const body = JSON.parse(opts.body);
+        mine[body.bank] = { decision: body.decision, reason: body.reason, ts: new Date().toISOString() };
+        all[m[1]] = mine;
+        try { localStorage.setItem("rb-decisions", JSON.stringify(all)); } catch (e) { /* storage blocked: keep in memory */ }
+      }
+      return new Response(JSON.stringify({ case_id: m[1], decisions: mine, history: Object.keys(mine).length }), { headers: { "Content-Type": "application/json" } });
+    }
+    if (SNAP[path]) return realFetch(`/data/${SNAP[path]}.json`);
+    return realFetch(url, opts);
+  };
+}
+async function replayRecordedRun(onEv) {
+  const events = await (await fetch("/data/demo_events.json")).json();
+  let prev = 0;
+  for (const { t, ev } of events) {
+    const gap = Math.min(Math.max(t - prev, 0), 2.5);  // keep the recorded order; shorten long model waits
+    prev = t;
+    await new Promise((r) => setTimeout(r, gap * 1000));
+    onEv(ev);
+  }
+}
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const short = (m) => m.replace(/^M-/, "").slice(0, 6);
 let indicatorHelp = {};
@@ -225,6 +260,10 @@ $("#run").addEventListener("click", () => {
   $("#convo").innerHTML = ""; $("#case").hidden = true; q = 0; $("#qcount").textContent = "0 questions";
   graph = { nodes: [], edges: [] }; order = []; seedId = null; explanations = {}; blockedCount = 0; resetShared(); renderShared();
   $("#ring-banner").hidden = true; setStep(2);
+  if (STATIC) {
+    replayRecordedRun(onEvent).catch(() => { $("#status").textContent = "The recorded run could not be loaded. Reload the page."; $("#run").disabled = false; });
+    return;
+  }
   const es = new EventSource("/api/demo/run");
   es.onmessage = (m) => { const ev = JSON.parse(m.data); onEvent(ev); if (ev.type === "done" || ev.type === "error") es.close(); };
   es.onerror = () => { es.close(); if ($("#run").disabled) { $("#status").textContent = "Connection lost. Run it again."; $("#run").disabled = false; } };
@@ -244,7 +283,9 @@ async function loadRegulator() {
   const r = await fetch("/api/regulator");
   if (!r.ok) { $("#reg-source").textContent = "The regulator view isn't available right now. Reload the page."; return; }
   const d = await r.json();
-  $("#reg-source").innerHTML = d.source === "bigquery"
+  $("#reg-source").innerHTML = d.source === "recorded"
+    ? "Recorded from the live system (on Cloud Run this view is read live from BigQuery)."
+    : d.source === "bigquery"
     ? `Live from BigQuery · dataset <code>${esc(d.dataset)}</code>${d.looker_url ? ` · <a href="${esc(d.looker_url)}" target="_blank" rel="noopener">Open the Looker Studio report</a>` : ""}`
     : "From this server's memory (BigQuery is not connected here).";
   const banks = d.by_bank || [], sum = (k) => banks.reduce((a, b) => a + (b[k] || 0), 0);

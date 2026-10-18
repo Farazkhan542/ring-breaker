@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ring Breaker</title>
+<meta name="description" content="Bank agents that catch money-laundering rings together, without sharing customer data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="9" cy="20" r="5"/><rect x="18" y="15" width="10" height="10"/><path d="M16 3 L22 13 L10 13 Z"/></svg></span>
+    <span class="name">Ring Breaker</span>
+  </div>
+  <nav aria-label="Sections">
+    <button class="tab" aria-selected="true" data-tab="investigate">Investigation</button>
+    <button class="tab" aria-selected="false" data-tab="results">Results</button>
+    <button class="tab" aria-selected="false" data-tab="rules">Sharing rules</button>
+    <button class="tab" aria-selected="false" data-tab="regulator">Regulator</button>
+    <button class="tab" aria-selected="false" data-tab="audit">Audit log</button>
+    <a class="gh" href="https://github.com/Farazkhan542/ring-breaker" target="_blank" rel="noopener">Code</a>
+  </nav>
+</header>
+
+<main id="main">
+<section id="tab-investigate" class="panel-tab">
+  <p class="notice" role="note"><b>Hosted demo:</b> this page replays a real run recorded from the live Ring Breaker system (bank agents talking over A2A, the policy agent, and Gemini and Gemma via Google ADK). Long model waits are shortened. The full backend runs on Cloud Run; source code: <a href="https://github.com/Farazkhan542/ring-breaker" target="_blank" rel="noopener">GitHub</a>.</p>
+  <div class="hero">
+    <div>
+      <h1>Three banks each see a few odd transfers. Together they see a laundering ring.</h1>
+      <p class="lede">Each bank's AI agent works only on its own data. When a customer shows objective red flags, the agent asks the other banks narrow questions over Google's Agent2Agent (A2A) protocol, sharing masked IDs only. A policy agent checks every message.</p>
+    </div>
+    <div class="run">
+      <button id="run" class="primary">Run the investigation</button>
+      <p id="status" class="status" role="status">Synthetic data · no login · about 30 seconds</p>
+    </div>
+  </div>
+
+  <ol class="steps" aria-label="How the investigation unfolds">
+    <li data-step="1"><a href="#banks-h"><span class="n" aria-hidden="true">1</span><span><b>Each bank alone</b><small>Sees a few odd transfers, no ring</small></span></a></li>
+    <li data-step="2"><a href="#stage"><span class="n" aria-hidden="true">2</span><span><b>Agents ask each other</b><small>Masked IDs, every message policy-checked</small></span></a></li>
+    <li data-step="3"><a href="#ring-banner"><span class="n" aria-hidden="true">3</span><span><b>Ring found</b><small>Gemini writes the case, a skeptic pushes back</small></span></a></li>
+    <li data-step="4"><a href="#approvals-h"><span class="n" aria-hidden="true">4</span><span><b>Officers decide</b><small>Nothing is filed automatically</small></span></a></li>
+  </ol>
+
+  <h2 class="section-h" id="banks-h">Step 1 · Each bank, working alone</h2>
+  <div id="banks" class="banks" aria-busy="true"></div>
+
+  <h2 class="section-h" id="stage">Step 2 · The agents investigate together</h2>
+  <div class="stage">
+    <section class="card map-card" aria-labelledby="map-h">
+      <div class="card-h">
+        <h2 id="map-h">Ring map</h2>
+        <span class="legend"><span class="lg flagged"></span>flagged by its own bank <span class="lg withheld"></span>withheld (not flagged)</span>
+      </div>
+      <div id="map" class="map"><p class="empty">Run the investigation to follow the money across banks.</p></div>
+      <details class="alt">
+        <summary>Ring map as a table</summary>
+        <table id="ring-table"><thead><tr><th>Masked account</th><th>Bank</th><th>Red flags</th><th>Hops from start</th></tr></thead><tbody></tbody></table>
+      </details>
+    </section>
+    <section class="card convo-card" aria-labelledby="convo-h">
+      <div class="card-h"><h2 id="convo-h">Agent-to-agent conversation</h2><span id="qcount" class="pill">0 questions</span></div>
+      <ol id="convo" class="convo" aria-live="polite"></ol>
+    </section>
+  </div>
+
+  <section id="ring-banner" class="ring-banner" aria-live="polite" hidden></section>
+
+  <section class="card" aria-labelledby="shared-h">
+    <div class="card-h"><h2 id="shared-h">What left each bank</h2><span id="shared-pct" class="pill" title="Transfer records shared, as a share of all transactions in the three banks">0% of transactions shared</span></div>
+    <div id="shared" class="shared"></div>
+  </section>
+
+  <section id="case" class="card case" aria-labelledby="case-h" hidden>
+    <div class="card-h"><h2 id="case-h">Joint case file</h2><span id="case-meta" class="pill"></span></div>
+    <div class="case-grid">
+      <article>
+        <h3 class="col-h">Case writer <span id="writer-src" class="src"></span></h3>
+        <div id="casefile" class="md"></div>
+      </article>
+      <article class="skeptic">
+        <h3 class="col-h">Skeptic: the innocent explanation <span id="skeptic-src" class="src"></span></h3>
+        <div id="skeptic" class="md"></div>
+        <div id="confidence" class="confidence"></div>
+      </article>
+    </div>
+    <h3 class="col-h" id="approvals-h">Step 4 · Officer sign-off: each bank decides about its own customers</h3>
+    <div id="approvals" class="approvals"></div>
+  </section>
+</section>
+
+<section id="tab-results" class="panel-tab" hidden>
+  <h1 class="page-h">Alone vs together</h1>
+  <p class="lede">Measured by the evaluation harness (<code>python -m ringbreaker.eval</code>). A ring counts as found only if one group holds at least half of its accounts <em>and</em> is mostly that ring, so one giant blob can't take credit for many rings.</p>
+  <div id="metrics"></div>
+</section>
+
+<section id="tab-rules" class="panel-tab" hidden>
+  <h1 class="page-h">Sharing rules</h1>
+  <p class="lede">Modelled on Singapore's COSMIC principle: banks share only when objective indicators of suspicion are present. The policy agent enforces these rules on every request and answer. Not legal advice.</p>
+  <ol id="rules" class="rules"></ol>
+</section>
+
+<section id="tab-regulator" class="panel-tab" hidden>
+  <h1 class="page-h">Regulator view</h1>
+  <p class="lede">What a supervisor sees across all cases: how many questions each bank answered, what it withheld, what the policy agent blocked and how much left each bank. Run the investigation to add a case.</p>
+  <p id="reg-source" class="status"></p>
+  <div id="reg-tiles" class="tiles"></div>
+  <div class="reg-grid">
+    <section class="card" aria-labelledby="reg-shared-h">
+      <div class="card-h"><h2 id="reg-shared-h">Masked IDs shared, by bank</h2></div>
+      <div id="reg-chart" class="reg-chart"></div>
+    </section>
+    <section class="card" aria-labelledby="reg-blocked-h">
+      <div class="card-h"><h2 id="reg-blocked-h">Requests blocked, by rule</h2></div>
+      <div class="table-wrap flat"><table id="reg-blocked"><thead><tr><th>Rule</th><th class="num">Blocked</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+  <section class="card" aria-labelledby="reg-banks-h">
+    <div class="card-h"><h2 id="reg-banks-h">Activity by bank</h2></div>
+    <div class="table-wrap flat"><table id="reg-banks"><thead><tr><th>Bank</th><th class="num" title="Allowed questions this bank received from other banks' agents">Questions received</th><th class="num" title="Answers with flagged-customer details">Answers sent</th><th class="num" title="Questions about customers this bank had not flagged, so nothing was shared">Answers withheld</th><th class="num" title="Distinct masked account IDs in this bank's answers">Masked IDs shared</th><th class="num" title="Transfers described in answers, as amount band and 6-hour window">Transfer records shared</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section class="card" aria-labelledby="reg-cases-h">
+    <div class="card-h"><h2 id="reg-cases-h">Recent cases</h2></div>
+    <div class="table-wrap flat"><table id="reg-cases"><thead><tr><th>Time (UTC)</th><th>Case</th><th>Lead bank</th><th class="num">Ring size</th><th class="num">Questions</th><th class="num">Blocked</th><th class="num">Confidence</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</section>
+
+<section id="tab-audit" class="panel-tab" hidden>
+  <h1 class="page-h">Audit log</h1>
+  <p class="lede">Every cross-bank message: who asked, what was asked, what was shared and which rule allowed or blocked it.</p>
+  <div class="table-wrap"><table id="audit"><thead><tr><th>Time (UTC)</th><th>From → to</th><th>Kind</th><th>Content</th><th>Rule</th></tr></thead><tbody></tbody></table></div>
+</section>
+</main>
+
+<footer class="foot">
+  <p><b>Ring Breaker</b> by team DA REAL OG’s · Google Cloud AI Builder Cup 2026 · BFSI</p>
+  <p>Synthetic data only; no real customer data. Built with Gemini, Gemma, Google ADK and A2A on Cloud Run, with Firestore and BigQuery. <a href="https://github.com/Farazkhan542/ring-breaker" target="_blank" rel="noopener">Source code</a></p>
+</footer>
+<script>window.RB_STATIC = true;</script>
+<script src="/static/app.js"></script>
+</body>
+</html>

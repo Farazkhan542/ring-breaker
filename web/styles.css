@@ -69,6 +69,8 @@ main { max-width: 1320px; margin: 0 auto; padding: 24px; }
 .bank li.more { display: none; }
 .bank.expanded li.more { display: flex; }
 .more-btn { margin-top: 6px; font: 500 13px var(--body); background: none; border: 0; padding: 4px 0; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.notice { background: #fff6e0; border: 1px solid #e8c56a; border-radius: 8px; padding: 10px 14px; margin: 0 0 20px; font-size: 14px; }
+.notice a { color: var(--ink); }
 .section-h { font-size: 13px; font-family: var(--body); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--muted); margin: 0 0 10px; }
 .page-h { font-size: 32px; }
